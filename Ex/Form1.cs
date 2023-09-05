@@ -13,16 +13,11 @@ namespace Ex
         private ComboBox comboBoxWords;
         private Label resultsLabel;
         private Button pauseButton;
-        private Button stopButton;
         private Button exportButton;
         private Button openFolderButton;
         private Button saveReportButton;
         private string TextBoxMessege;
         private const string LogTXT = "Log.txt";
-
-
-
-
 
         public Form1()
         {
@@ -31,17 +26,17 @@ namespace Ex
 
             if (currentPrincipal.IsInRole(WindowsBuiltInRole.Administrator))
             {
-                MessageBox.Show("Програма запущена з правами адміністратора.");
+                MessageBox.Show("The program was launched with the rights of an administrator.");
             }
             else
             {
-                MessageBox.Show("Програма не запущена з правами адміністратора.");
-
+                MessageBox.Show("The program is not launched with administrator rights.");
 
             }
 
 
             InitializeComponent();
+            
             this.FormBorderStyle = FormBorderStyle.FixedDialog;
             this.MaximizeBox = false;
 
@@ -74,30 +69,23 @@ namespace Ex
 
         private void importMenuItem_Click(object sender, EventArgs e)
         {
-            // Обробник події для "Імпорт"
-            MessageBox.Show("Ви натиснули на 'Імпорт'");
         }
 
         private void exportMenuItem_Click(object sender, EventArgs e)
         {
-            // Обробник події для "Експорт"
-            MessageBox.Show("Ви натиснули на 'Експорт'");
         }
 
         private void exitMenuItem_Click(object sender, EventArgs e)
         {
-            // Обробник події для "Вихід"
             Application.Exit();
         }
 
         private void aboutMenuItem_Click(object sender, EventArgs e)
         {
-            // Обробник події для "Про програму"
-            MessageBox.Show("Про програму:\nВерсія 1.0\nАвтор: Ваше ім'я");
         }
         public void OnForm()
         {
-            
+
 
             comboBoxWords = new ComboBox();
             comboBoxWords.Location = new Point(10, 120);
@@ -138,7 +126,8 @@ namespace Ex
             catch (Exception error)
             {
 
-                CatchExToLog(error);            }
+                CatchExToLog(error);
+            }
         }
         /*-----------------------------------------------------------------*/
 
@@ -247,7 +236,7 @@ namespace Ex
         {
             try
             {
-    
+
                 using (StreamWriter log = new StreamWriter(LogTXT, true))
                 {
                     log.WriteLine(error.ToString());
@@ -264,10 +253,7 @@ namespace Ex
         /*-----------------------------------------------------------------*/
 
         /*-----------------------------------------------------------------*/
-        private void stopButton_Click(object sender, EventArgs e)
-        {
-            cancelSearch = true;
-        }
+
         private void exportButton_Click(object sender, EventArgs e)
         {
 
@@ -303,24 +289,32 @@ namespace Ex
         //start button
         private void button3_Click(object sender, EventArgs e)
         {
-            cancelSearch = false;
-            string wSearch = textBox1.Text;
-            DriveInfo[] allDrives = DriveInfo.GetDrives();
-            Thread searchThread = new Thread(() =>
+            try
+            {
+                cancelSearch = false;
+                string wSearch = textBox1.Text;
+                DriveInfo[] allDrives = DriveInfo.GetDrives();
+                Thread searchThread = new Thread(() =>
+                {
+
+                    foreach (DriveInfo drive in allDrives)
+                    {
+                        if (drive.IsReady)
+                        {
+                            string rootDirectory = drive.RootDirectory.FullName;
+                            SearchFilesAndDirectories(rootDirectory, wSearch);
+                            //MessageBox.Show(rootDirectory);
+                        }
+                    }
+                });
+
+                searchThread.Start();
+            }
+            catch (Exception error)
             {
 
-                foreach (DriveInfo drive in allDrives)
-                {
-                    if (drive.IsReady)
-                    {
-                        string rootDirectory = drive.RootDirectory.FullName;
-                        SearchFilesAndDirectories(rootDirectory, wSearch);
-                        //MessageBox.Show(rootDirectory);
-                    }
-                }
-            });
-
-            searchThread.Start();
+                CatchExToLog(error);
+            }
         }
         //Browse button
         private void button4_Click(object sender, EventArgs e)
@@ -372,6 +366,20 @@ namespace Ex
                 {
                     textBox1.Text = "";
                 }
+            }
+            catch (Exception error)
+            {
+
+                CatchExToLog(error);
+            }
+        }
+        //StopSearchButton
+        private void button5_Click(object sender, EventArgs e)
+        {
+            try
+            {
+                cancelSearch = true;
+
             }
             catch (Exception error)
             {

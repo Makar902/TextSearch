@@ -15,7 +15,12 @@ namespace Ex
             // see https://aka.ms/applicationconfiguration.
             ApplicationConfiguration.Initialize();
             Application.Run(new Form1());
+            Application.EnableVisualStyles();
+            Application.SetCompatibleTextRenderingDefault(false);
 
+            Form1 mainForm = new Form1();
+
+           // mainForm.Icon = Properties.Resources.;
            
 
 
