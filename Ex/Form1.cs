@@ -18,10 +18,17 @@ namespace Ex
         private Button saveReportButton;
         private string TextBoxMessege;
         private const string LogTXT = "Log.txt";
+        private ulong fileCount;
+        string directoryWhere;
+        string wordsToSearch;
 
         public Form1()
         {
             AdminRightsInitiate();
+
+            fileCount = 0;
+            directoryWhere = string.Empty;
+            wordsToSearch = string.Empty;  
 
             InitializeComponent();
             
@@ -98,16 +105,29 @@ namespace Ex
                 MenuStrip menuStrip = new MenuStrip();
 
                 ToolStripMenuItem fileMenuItem = new ToolStripMenuItem("File");
-                ToolStripMenuItem editMenuItem = new ToolStripMenuItem("View");
-                ToolStripMenuItem helpMenuItem = new ToolStripMenuItem("About");
+                ToolStripMenuItem generateReport = new ToolStripMenuItem("Generate report");
+                ToolStripMenuItem changeWayToSave = new ToolStripMenuItem("Change way to save");
+
+                fileMenuItem.DropDownItems.Add(generateReport);
+                fileMenuItem.DropDownItems.Add(changeWayToSave);
+
+                generateReport.Click += GenerateReport_Click;
+
+
+                ToolStripMenuItem helpMenuItem = new ToolStripMenuItem("Help");
+                ToolStripMenuItem helpWithBrowse=new ToolStripMenuItem("Help with browsing file");
+                ToolStripMenuItem helpWithChangeWayToSave = new ToolStripMenuItem("Help with changing way to save");
+
+                helpMenuItem.DropDownItems.Add(helpWithBrowse);
+                helpMenuItem.DropDownItems.Add(helpWithChangeWayToSave);
 
                 menuStrip.Items.Add(fileMenuItem);
-                menuStrip.Items.Add(editMenuItem);
                 menuStrip.Items.Add(helpMenuItem);
 
                 this.MainMenuStrip = menuStrip;
-
                 this.Controls.Add(menuStrip);
+
+                  
             }
             catch (Exception error)
             {
@@ -115,6 +135,51 @@ namespace Ex
                 CatchExToLog(error);
             }
         }
+
+        private void GenerateReport_Click(object? sender, EventArgs e)
+        {
+            try
+            {
+                using (FolderBrowserDialog folderDialog = new FolderBrowserDialog())
+                {
+                    folderDialog.Description = "Select way...";
+                    folderDialog.SelectedPath = @"C:\";
+
+                    DialogResult result = folderDialog.ShowDialog();
+
+                    if (result == DialogResult.OK && !string.IsNullOrWhiteSpace(folderDialog.SelectedPath))
+                    {
+                        string selectedFolderPath = folderDialog.SelectedPath;
+                        try
+                        {
+                            using (StreamWriter userReportTXT = new StreamWriter(selectedFolderPath+".txt", true))
+                            {
+                                userReportTXT.WriteLine("Files found with your text: ", SearchFilesAndDirectories(directoryWhere, wordsToSearch, true));
+                                userReportTXT.Close();
+                            }
+                        }
+                        catch (Exception hereEr)
+                        {
+
+                            CatchExToLog(hereEr, "Here with writer: ");
+                        }
+                     
+
+                        
+                    }
+                   
+                }
+            }
+            catch (Exception error)
+            {
+
+                CatchExToLog(error);
+            }
+        }
+
+
+
+
         /*-----------------------------------------------------------------*/
 
         /*-----------------------------------------------------------------*/
@@ -146,46 +211,85 @@ namespace Ex
 
         /*-----------------------------------------------------------------*/
         //Search&CopyFiles
-        private void SearchFilesAndDirectories(string directoryWhere, string wordsToSearch)
+        private  ulong SearchFilesAndDirectories(string directoryWhere, string wordsToSearch,bool userReport=false)
         {
             directoryWhere = "E:\\TEST";
             try
             {
-                string[] files = Directory.GetFiles(directoryWhere);
-                int totalFiles = files.Length;
-                int processedFiles = 0;
-
-                foreach (string file in files)
+                if (userReport==false)
                 {
-                    listBox1.Items.Add(file);
-                    if (cancelSearch)
+                    string[] files = Directory.GetFiles(directoryWhere);
+                    ulong totalFiles = (ulong)files.Length;
+                    ulong processedFiles = 0;
+                    fileCount = totalFiles;
+
+                    foreach (string file in files)
                     {
-                        return;
+                        listBox1.Items.Add(file);
+                        if (cancelSearch)
+                        {
+                            return 0;
+                        }
+
+                        string fileContents = File.ReadAllText(file);
+                        if (fileContents.Contains(wordsToSearch))
+                        {
+                            string path_to = Directory.GetCurrentDirectory() + '\\';
+                            CopyAndModifyFile(directoryWhere, path_to, wordsToSearch);
+                            MessageBox.Show("Dire bef in Search^ " + directoryWhere);
+                        }
+
+                        processedFiles++;
+                        UpdateProgressBar(processedFiles, totalFiles);
                     }
 
-                    string fileContents = File.ReadAllText(file);
-                    if (fileContents.Contains(wordsToSearch))
+                    string[] subDirectories = Directory.GetDirectories(directoryWhere);
+                    foreach (string subDirectory in subDirectories)
                     {
-                        string path_to = Directory.GetCurrentDirectory() + '\\';
-                        CopyAndModifyFile(directoryWhere, path_to, wordsToSearch);
-                        MessageBox.Show("Dire bef in Search^ " + directoryWhere);
+                        SearchFilesAndDirectories(subDirectory, wordsToSearch);
                     }
-
-                    processedFiles++;
-                    UpdateProgressBar(processedFiles, totalFiles);
+                    return 0;
                 }
-
-                string[] subDirectories = Directory.GetDirectories(directoryWhere);
-                foreach (string subDirectory in subDirectories)
+                else if (userReport==true)
                 {
-                    SearchFilesAndDirectories(subDirectory, wordsToSearch);
+                    string[] files = Directory.GetFiles(directoryWhere);
+                    ulong totalFiles = (ulong)files.Length;
+                    ulong processedFiles = 0;
+                    fileCount = totalFiles;
+
+                    foreach (string file in files)
+                    {
+                        listBox1.Items.Add(file);
+                        if (cancelSearch)
+                        {
+                            return 0;
+                        }
+
+                        string fileContents = File.ReadAllText(file);
+                        if (fileContents.Contains(wordsToSearch))
+                        {
+                            string path_to = Directory.GetCurrentDirectory() + '\\';
+                        }
+
+                        processedFiles++;
+                        UpdateProgressBar(processedFiles, totalFiles);
+                    }
+
+                    string[] subDirectories = Directory.GetDirectories(directoryWhere);
+                    foreach (string subDirectory in subDirectories)
+                    {
+                        SearchFilesAndDirectories(subDirectory, wordsToSearch);
+                    }
+                    return fileCount;
                 }
             }
             catch (Exception ex)
             {
                 CatchExToLog(ex);
             }
+            return 0;
         }
+
         private void CopyAndModifyFile(string directoryWhere, string path_to, string wordsToSearch)
         {
             try
@@ -215,13 +319,13 @@ namespace Ex
 
         /*-----------------------------------------------------------------*/
         //ProgeressBar
-        private void UpdateProgressBar(int processedFiles, int totalFiles)
+        private void UpdateProgressBar(ulong processedFiles, ulong totalFiles)
         {
             try
             {
                 if (InvokeRequired)
                 {
-                    BeginInvoke(new Action<int, int>(UpdateProgressBar), processedFiles, totalFiles);
+                    BeginInvoke(new Action<ulong, ulong>(UpdateProgressBar), processedFiles, totalFiles);
                     return;
                 }
 
@@ -246,19 +350,38 @@ namespace Ex
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         private void CatchExToLog(Exception error)
         {
+            CatchExToLog(error, null);
+        }
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+
+        private void CatchExToLog(Exception error, string? text)
+        {
             try
             {
-
                 using (StreamWriter log = new StreamWriter(LogTXT, true))
                 {
-                    log.WriteLine(error.ToString());
+                    if (text != null)
+                    {
+                        log.WriteLine(text += error.ToString());
+                    }
+                    else
+                    {
+                        log.WriteLine(error.ToString());
+                    }
                 }
             }
             catch (Exception serror)
             {
                 using (StreamWriter log = new StreamWriter(LogTXT, true))
                 {
-                    log.WriteLine(serror.ToString());
+                    if (text != null)
+                    {
+                        log.WriteLine(text += serror.ToString());
+                    }
+                    else
+                    {
+                        log.WriteLine(serror.ToString());
+                    }
                 }
             }
         }
@@ -304,7 +427,7 @@ namespace Ex
             try
             {
                 cancelSearch = false;
-                string wSearch = textBox1.Text;
+                wordsToSearch = textBox1.Text;
                 DriveInfo[] allDrives = DriveInfo.GetDrives();
                 Thread searchThread = new Thread(() =>
                 {
@@ -313,8 +436,8 @@ namespace Ex
                     {
                         if (drive.IsReady)
                         {
-                            string rootDirectory = drive.RootDirectory.FullName;
-                            SearchFilesAndDirectories(rootDirectory, wSearch);
+                            directoryWhere = drive.RootDirectory.FullName;
+                            SearchFilesAndDirectories(directoryWhere, wordsToSearch);
                             //MessageBox.Show(rootDirectory);
                         }
                     }
