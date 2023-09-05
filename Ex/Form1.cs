@@ -21,19 +21,7 @@ namespace Ex
 
         public Form1()
         {
-            WindowsIdentity currentIdentity = WindowsIdentity.GetCurrent();
-            WindowsPrincipal currentPrincipal = new WindowsPrincipal(currentIdentity);
-
-            if (currentPrincipal.IsInRole(WindowsBuiltInRole.Administrator))
-            {
-                MessageBox.Show("The program was launched with the rights of an administrator.");
-            }
-            else
-            {
-                MessageBox.Show("The program is not launched with administrator rights.");
-
-            }
-
+            AdminRightsInitiate();
 
             InitializeComponent();
             
@@ -44,6 +32,7 @@ namespace Ex
             OnForm();
             MenuStripInit();
         }
+
         /*-----------------------------------------------------------------*/
         //TextBox1 Init
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -75,10 +64,7 @@ namespace Ex
         {
         }
 
-        private void exitMenuItem_Click(object sender, EventArgs e)
-        {
-            Application.Exit();
-        }
+       
 
         private void aboutMenuItem_Click(object sender, EventArgs e)
         {
@@ -131,6 +117,32 @@ namespace Ex
         }
         /*-----------------------------------------------------------------*/
 
+        /*-----------------------------------------------------------------*/
+        //Admin rights query
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        private void AdminRightsInitiate()
+        {
+            try
+            {
+                WindowsIdentity currentIdentity = WindowsIdentity.GetCurrent();
+                WindowsPrincipal currentPrincipal = new WindowsPrincipal(currentIdentity);
+
+                if (currentPrincipal.IsInRole(WindowsBuiltInRole.Administrator))
+                {
+                    MessageBox.Show("The program was launched with the rights of an administrator.");
+                }
+                else
+                {
+                    MessageBox.Show("The program is not launched with administrator rights.");
+
+                }
+            }
+            catch (Exception error)
+            {
+                CatchExToLog(error);
+            }
+        }
+        /*-----------------------------------------------------------------*/
 
         /*-----------------------------------------------------------------*/
         //Search&CopyFiles
