@@ -1,4 +1,5 @@
 // dllmain.cpp : Defines the entry point for the DLL application.
+
 #include "pch.h"
 #include <iostream>
 #include <vector>
@@ -32,7 +33,7 @@ struct FileInfo {
     FILETIME lastWriteTime;
     ULONGLONG fileSize;
 };
- 
+ //Don`t use
 __declspec(dllexport)
 std::vector<FileInfo> SearchAndModifyFiles(const std::string& directoryWhere, const std::string& wordsToSearch) {
     WCHAR buffer[MAX_PATH];

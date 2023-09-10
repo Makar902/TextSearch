@@ -1,5 +1,6 @@
 ﻿using System;
 using System.IO;
+using System.Linq.Expressions;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 using System.Security.Principal;
@@ -104,7 +105,7 @@ namespace Ex
                 fileMenuItem.DropDownItems.Add(generateReport);
                 fileMenuItem.DropDownItems.Add(changeWayToSave);
 
-                generateReport.Click += GenerateReport_Click;
+                //generateReport.Click += GenerateReport_Click;
 
                 ToolStripMenuItem helpMenuItem = new ToolStripMenuItem("Help");
                 ToolStripMenuItem helpWithBrowse = new ToolStripMenuItem("Help with browsing file");
@@ -125,44 +126,44 @@ namespace Ex
             }
         }
 
-        private void GenerateReport_Click(object? sender, EventArgs e)
-        {
-            try
-            {
-                using (FolderBrowserDialog folderDialog = new FolderBrowserDialog())
-                {
-                    folderDialog.Description = "Select way...";
-                    folderDialog.SelectedPath = @"C:\";
+        //private void GenerateReport_Click(object? sender, EventArgs e)
+        //{
+        //    try
+        //    {
+        //        using (FolderBrowserDialog folderDialog = new FolderBrowserDialog())
+        //        {
+        //            folderDialog.Description = "Select way...";
+        //            folderDialog.SelectedPath = @"C:\";
 
-                    DialogResult result = folderDialog.ShowDialog();
+        //            DialogResult result = folderDialog.ShowDialog();
 
-                    if (result == DialogResult.OK && !string.IsNullOrWhiteSpace(folderDialog.SelectedPath))
-                    {
-                        string selectedFolderPath = folderDialog.SelectedPath;
-                        try
-                        {
-                            using (StreamWriter userReportTXT = new StreamWriter(selectedFolderPath + ".txt", true))
-                            {
-                                List<FileInfo> resultFromSearch = SearchAndModifyFiles(directoryWhere, wordsToSearch, true);
-                                for (int i = 0; i < resultFromSearch.ToArray().Length; i++)
-                                {
-                                    userReportTXT.WriteLine(resultFromSearch[i]);
-                                }
-                                userReportTXT.Close();
-                            }
-                        }
-                        catch (Exception hereEr)
-                        {
-                            CatchExToLog(hereEr, "Here with writer: ");
-                        }
-                    }
-                }
-            }
-            catch (Exception error)
-            {
-                CatchExToLog(error);
-            }
-        }
+        //            if (result == DialogResult.OK && !string.IsNullOrWhiteSpace(folderDialog.SelectedPath))
+        //            {
+        //                string selectedFolderPath = folderDialog.SelectedPath;
+        //                try
+        //                {
+        //                    using (StreamWriter userReportTXT = new StreamWriter(selectedFolderPath + ".txt", true))
+        //                    {
+        //                        List<FileInfo> resultFromSearch = SearchAndModifyFiles(directoryWhere, wordsToSearch, true);
+        //                        for (int i = 0; i < resultFromSearch.ToArray().Length; i++)
+        //                        {
+        //                            userReportTXT.WriteLine(resultFromSearch[i]);
+        //                        }
+        //                        userReportTXT.Close();
+        //                    }
+        //                }
+        //                catch (Exception hereEr)
+        //                {
+        //                    CatchExToLog(hereEr, "Here with writer: ");
+        //                }
+        //            }
+        //        }
+        //    }
+        //    catch (Exception error)
+        //    {
+        //        CatchExToLog(error);
+        //    }
+        //}
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         private void AdminRightsInitiate()
         {
@@ -186,51 +187,76 @@ namespace Ex
             }
         }
 
-        [DllImport("kernel32.dll", CharSet = CharSet.Auto, SetLastError = true)]
-        public static extern IntPtr FindFirstFile(string lpFileName, out WIN32_FIND_DATA lpFindFileData);
 
-        [DllImport("kernel32.dll", CharSet = CharSet.Auto, SetLastError = true)]
-        public static extern bool FindNextFile(IntPtr hFindFile, out WIN32_FIND_DATA lpFindFileData);
 
-        [DllImport("kernel32.dll", CharSet = CharSet.Auto, SetLastError = true)]
-        public static extern bool FindClose(IntPtr hFindFile);
-        [DllImport("SearchAndCopy", CharSet = CharSet.Auto, SetLastError = true)]
-        public static extern List<FileInfo> SearchAndModifyFiles(string directoryWhere, string wordsToSearch);
-        [DllImport("SearchAndCopy", CharSet = CharSet.Auto, SetLastError = true)]
-        public static extern List<FileInfo> SearchAndModifyFiles(string directoryWhere, string wordsToSearch, bool userReport);
-        [StructLayout(LayoutKind.Sequential, CharSet = CharSet.Auto)]
-        public struct WIN32_FIND_DATA
-        {
-            public uint dwFileAttributes;
-            public long ftCreationTime;
-            public long ftLastAccessTime;
-            public long ftLastWriteTime;
-            public uint nFileSizeHigh;
-            public uint nFileSizeLow;
-            public uint dwReserved0;
-            public uint dwReserved1;
-            [MarshalAs(UnmanagedType.ByValTStr, SizeConst = 260)]
-            public string cFileName;
-            [MarshalAs(UnmanagedType.ByValTStr, SizeConst = 14)]
-            public string cAlternateFileName;
-        }
         //Start Button
         private async void button3_Click(object sender, EventArgs e)
         {
             try
             {
-                cancelSearch = false;
-                wordsToSearch = textBox1.Text;
-                DriveInfo[] allDrives = DriveInfo.GetDrives();
-
-                foreach (DriveInfo drive in allDrives)
+                if ((bool)sender!=true)
                 {
-                    if (drive.IsReady)
+                    cancelSearch = false;
+                    wordsToSearch = textBox1.Text;
+
+                    DriveInfo[] allDrives = DriveInfo.GetDrives();
+
+                    List<Task> tasks = new List<Task>();
+
+                    foreach (DriveInfo drive in allDrives)
                     {
-                        directoryWhere = drive.RootDirectory.FullName;
-                        // await Task.Run(() => SearchAndModifyFiles("E:\\", wordsToSearch));
-                        SearchAndModifyFiles("E:\\", wordsToSearch);
+                        if (drive.IsReady)
+                        {
+                            directoryWhere = drive.RootDirectory.FullName;
+
+                            tasks.Add(SearchAndModifyFilesAsync(directoryWhere, wordsToSearch));
+                        }
                     }
+
+                    await Task.WhenAll(tasks);
+                }
+                else if ((bool)sender==true) 
+                {
+                    cancelSearch = false;
+                    DriveInfo[] allDrives = DriveInfo.GetDrives();
+
+                    List<Task> tasks = new List<Task>();
+
+                    foreach (DriveInfo drive in allDrives)
+                    {
+                        if (drive.IsReady)
+                        {
+                            directoryWhere = drive.RootDirectory.FullName;
+
+                            tasks.Add(SearchAndModifyFilesAsync(directoryWhere, wordsToSearch));
+                        }
+                    }
+
+                    await Task.WhenAll(tasks);
+                }
+            }
+            catch (Exception error)
+            {
+                CatchExToLog(error);
+            }
+        }
+        //Import and start
+        private void button1_ClickAsync(object sender, EventArgs e)
+        {
+            try
+            {
+                if (listBox1.SelectedIndex >= 0)
+                {
+                    string selectedFilePath = listBox1.SelectedItem.ToString();
+
+                    string fileContent = File.ReadAllText(selectedFilePath);
+
+                    wordsToSearch = fileContent;
+                  button3_Click(true, e);
+                }
+                else
+                {
+                    MessageBox.Show("Select file from list.", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
                 }
             }
             catch (Exception error)
@@ -264,13 +290,14 @@ namespace Ex
             try
             {
                 OpenFileDialog openFileDialog = new OpenFileDialog();
-                openFileDialog.Multiselect = true;
+                openFileDialog.Multiselect = true; 
                 if (openFileDialog.ShowDialog() == DialogResult.OK)
                 {
-                    string[] UserFilePath = openFileDialog.FileNames;
-                    for (int i = 0; i < UserFilePath.Length; i++)
+                    string[] selectedFilePaths = openFileDialog.FileNames;
+
+                    foreach (string filePath in selectedFilePaths)
                     {
-                        listBox1.Items.Add(UserFilePath[i]);
+                        listBox1.Items.Add(filePath);
                     }
                 }
             }
@@ -292,117 +319,60 @@ namespace Ex
             }
         }
 
-        //private async Task SearchFilesAndDirectories(string directoryWhere, string wordsToSearch)
-        //{
-        //    try
-        //    {
-        //        string[] files = Directory.GetFiles(directoryWhere);
-        //        ulong totalFiles = (ulong)files.Length;
-        //        ulong processedFiles = 0;
-        //        fileCount = totalFiles;
-
-        //        foreach (string file in files)
-        //        {
-        //            if (cancelSearch)
-        //            {
-        //                return;
-        //            }
-
-        //            string fileContents = File.ReadAllText(file);
-        //            if (fileContents.Contains(wordsToSearch))
-        //            {
-        //                string path_to = Directory.GetCurrentDirectory() + '\\';
-        //                CopyAndModifyFile(directoryWhere, path_to, wordsToSearch);
-        //                //MessageBox.Show("Dire bef in Search^ " + directoryWhere);
-        //            }
-
-        //            processedFiles++;
-        //            UpdateProgressBar(processedFiles, totalFiles);
-        //        }
-
-        //        string[] subDirectories = Directory.GetDirectories(directoryWhere);
-        //        foreach (string subDirectory in subDirectories)
-        //        {
-        //            await SearchFilesAndDirectories(subDirectory, wordsToSearch);
-        //        }
-        //    }
-        //    catch (Exception ex)
-        //    {
-        //        CatchExToLog(ex);
-        //    }
-        //}
-        //private dynamic SearchFilesAndDirectories(string directoryWhere, string wordsToSearch, bool userReport = false)
-        //{
-        //    ulong filesContainingText = 0;
-        //    string res;
-
-        //    List<string> resultList = new List<string>(); 
-
-        //    WIN32_FIND_DATA findData;
-        //    IntPtr findHandle = FindFirstFile(Path.Combine(directoryWhere, "*.*"), out findData);
-
-        //    try
-        //    {
-        //        if (findHandle != IntPtr.Zero)
-        //        {
-        //            do
-        //            {
-        //                string fileName = findData.cFileName;
-        //                string filePath = Path.Combine(directoryWhere, fileName);
-
-        //                if (((FileAttributes)findData.dwFileAttributes & FileAttributes.Directory) == 0)
-        //                {
-        //                    StringBuilder fileContent = new StringBuilder(4096);
-
-        //                    using (StreamReader reader = new StreamReader(filePath))
-        //                    {
-        //                        while (!reader.EndOfStream)
-        //                        {
-        //                            fileContent.Append(reader.ReadLine());
-        //                        }
-        //                    }
-
-        //                    if (fileContent.ToString().Contains(wordsToSearch))
-        //                    {
-        //                        filesContainingText++;
-        //                        res = "File name: " + findData.cFileName + " file path: " + filePath + " file attributes: " + findData.dwFileAttributes.ToString() + " file creation time: " + findData.ftCreationTime.ToString() + " file last access time: " + findData.ftLastAccessTime.ToString() + " file last written time: " + findData.ftLastWriteTime.ToString() + " file size: " + (((ulong)findData.nFileSizeHigh << 32) | findData.nFileSizeLow).ToString();
-        //                        resultList.Add(res);
-        //                    }
-        //                }
-        //            } while (FindNextFile(findHandle, out findData));
-
-        //            FindClose(findHandle);
-        //        }
-        //    }
-        //    catch (Exception error)
-        //    {
-        //        CatchExToLog(error);
-        //    }      
-        //        return resultList.ToArray();          
-        //}
 
 
-        //private void CopyAndModifyFile(string directoryWhere, string path_to, string wordsToSearch)
-        //{
-        //    try
-        //    {
-        //        //MessageBox.Show("dir in copy show: " + directoryWhere);
 
-        //        string fileName = Path.GetFileName(directoryWhere);
-        //        string ResPath = Path.Combine(path_to, fileName);
-        //        File.Copy(directoryWhere, ResPath, true);
 
-        //        string fileContents = File.ReadAllText(ResPath);
 
-        //        fileContents = fileContents.Replace(wordsToSearch, "*******");
 
-        //        File.WriteAllText(ResPath, fileContents);
-        //    }
-        //    catch (Exception ex)
-        //    {
-        //        CatchExToLog(ex);
-        //    }
-        //}
+        private async Task SearchAndModifyFilesAsync(string directoryPath, string searchText)
+        {
+            directoryPath = "E:\\TEST";
+            try
+            {
+                await Task.Run(() =>
+                {
+                    if (Directory.Exists(directoryPath))
+                    {
+                        foreach (string filePath in Directory.GetFiles(directoryPath, "*.*", SearchOption.AllDirectories))
+                        {
+                            try
+                            {
+                                string fileContent = File.ReadAllText(filePath);
+
+                                if (fileContent.Contains(searchText))
+                                {
+                                    string copyFilePath = Path.Combine(Directory.GetCurrentDirectory(), Path.GetFileName(filePath));
+
+                                    File.Copy(filePath, copyFilePath, true);
+
+                                    fileContent = fileContent.Replace(searchText, "*******");
+
+                                    File.WriteAllText(copyFilePath, fileContent);
+                                }
+                            }
+                            catch (UnauthorizedAccessException)
+                            {
+
+                            }
+                            catch (Exception ex)
+                            {
+                                CatchExToLog(ex, "Trouble with access");
+                            }
+                        }
+                    }
+                    else
+                    {
+                        //Console.WriteLine($"Каталог {directoryPath} не існує.");
+                    }
+                });
+            }
+            catch (Exception error)
+            {
+                CatchExToLog(error);
+            }
+        }
+
 
         private void UpdateProgressBar(ulong processedFiles, ulong totalFiles)
         {
@@ -417,7 +387,6 @@ namespace Ex
                 progressBar1.Value = (int)(((double)processedFiles / totalFiles) * 100);
                 if (progressBar1.Value == progressBar1.Maximum)
                 {
-                   // MessageBox.Show("Finished!");
                     progressBar1.Value = 0;
                 }
             }
@@ -465,5 +434,6 @@ namespace Ex
                 }
             }
         }
+        //Import and Start button
     }
 }

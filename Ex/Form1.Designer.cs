@@ -35,6 +35,7 @@
             button4 = new Button();
             progressBar1 = new ProgressBar();
             button5 = new Button();
+            button1 = new Button();
             SuspendLayout();
             // 
             // listBox1
@@ -101,11 +102,22 @@
             button5.UseVisualStyleBackColor = true;
             button5.Click += button5_Click;
             // 
+            // button1
+            // 
+            button1.Location = new Point(559, 369);
+            button1.Name = "button1";
+            button1.Size = new Size(233, 23);
+            button1.TabIndex = 7;
+            button1.Text = "Import selected text and start";
+            button1.UseVisualStyleBackColor = true;
+            button1.Click += button1_ClickAsync;
+            // 
             // Form1
             // 
             AutoScaleDimensions = new SizeF(7F, 15F);
             AutoScaleMode = AutoScaleMode.Font;
             ClientSize = new Size(804, 450);
+            Controls.Add(button1);
             Controls.Add(button5);
             Controls.Add(progressBar1);
             Controls.Add(button4);
@@ -128,5 +140,6 @@
         private Button button4;
         private ProgressBar progressBar1;
         private Button button5;
+        private Button button1;
     }
 }
