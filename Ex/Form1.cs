@@ -8,6 +8,7 @@ using System.Security.Principal;
 using System.Text;
 using System.Threading.Tasks;
 using System.Windows.Forms;
+using static System.Runtime.InteropServices.JavaScript.JSType;
 
 namespace Ex
 {
@@ -35,6 +36,7 @@ namespace Ex
             TextBoxInit();
             OnForm();
             MenuStripInit();
+            
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -105,13 +107,15 @@ namespace Ex
                 MenuStrip menuStrip = new MenuStrip();
 
                 ToolStripMenuItem fileMenuItem = new ToolStripMenuItem("File");
+                ToolStripMenuItem openLog = new ToolStripMenuItem("Open Log.txt");
                 ToolStripMenuItem generateReport = new ToolStripMenuItem("Generate report");
                 ToolStripMenuItem changeWayToSave = new ToolStripMenuItem("Change way to save");
 
                 fileMenuItem.DropDownItems.Add(generateReport);
                 fileMenuItem.DropDownItems.Add(changeWayToSave);
+                fileMenuItem.DropDownItems.Add(openLog);
 
-                //generateReport.Click += GenerateReport_Click;
+                openLog.Click += OpenLog_Click;                //generateReport.Click += GenerateReport_Click;
 
                 ToolStripMenuItem helpMenuItem = new ToolStripMenuItem("Help");
                 ToolStripMenuItem helpWithBrowse = new ToolStripMenuItem("Help with browsing file");
@@ -128,6 +132,21 @@ namespace Ex
             }
             catch (Exception error)
             {
+                CatchExToLog(error);
+            }
+        }
+
+        private void OpenLog_Click(object? sender, EventArgs e)
+        {
+            try
+            {
+                string currentDirectory = Directory.GetCurrentDirectory() + "\\" + LogTXT;
+                MessageBox.Show(currentDirectory);
+                Process.Start(currentDirectory);
+            }
+            catch (Exception error)
+            {
+
                 CatchExToLog(error);
             }
         }
@@ -185,7 +204,7 @@ namespace Ex
                 }
                 else
                 {
-                    MessageBox.Show("The program is not launched with administrator rights.");
+                    MessageBox.Show("The program is not launched with administrator rights.May be some trouble with acces");
                     haveAdminRights = false;
                 }
             }
@@ -198,33 +217,33 @@ namespace Ex
 
 
         //Start Button
-        //private async void FromImport()
-        //{
-        //    try
-        //    {
-        //        cancelSearch = false;
-        //        DriveInfo[] allDrives = DriveInfo.GetDrives();
+        private async void FromImport()
+        {
+            try
+            {
+                cancelSearch = false;
+                DriveInfo[] allDrives = DriveInfo.GetDrives();
 
-        //        List<Task> tasks = new List<Task>();
+                List<Task> tasks = new List<Task>();
 
-        //        foreach (DriveInfo drive in allDrives)
-        //        {
-        //            if (drive.IsReady)
-        //            {
-        //                directoryWhere = drive.RootDirectory.FullName;
+                foreach (DriveInfo drive in allDrives)
+                {
+                    if (drive.IsReady)
+                    {
+                        directoryWhere = drive.RootDirectory.FullName;
 
-        //                tasks.Add(SearchAndModifyFilesAsync(directoryWhere, wordsToSearch));
-        //            }
-        //        }
+                        tasks.Add(SearchAndModifyFilesAsync(directoryWhere, wordsToSearch));
+                    }
+                }
 
-        //        await Task.WhenAll(tasks);
-        //    }
-        //    catch (Exception error)
-        //    {
+                await Task.WhenAll(tasks);
+            }
+            catch (Exception error)
+            {
 
-        //        CatchExToLog(error);
-        //    }
-        //}
+                CatchExToLog(error);
+            }
+        }
         private async void button3_Click(object sender, EventArgs e)
         {
             try
@@ -276,7 +295,7 @@ namespace Ex
 #pragma warning restore CS8604 
 
                     wordsToSearch = fileContent;
-                   // FromImport();
+                    FromImport();
                 }
                 else
                 {
