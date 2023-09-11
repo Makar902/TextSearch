@@ -13,18 +13,23 @@ namespace Ex
 {
     public partial class Form1 : Form
     {
+#pragma warning disable CS0414
         private volatile bool cancelSearch = false;
+#pragma warning restore CS0414
         private const string LogTXT = "Log.txt";
         private string directoryWhere;
         private string wordsToSearch;
         private const string TextBoxMessege = "Enter your text here...";
-        private ulong fileCount = 0;
+        private object logLock = new object();
         private bool haveAdminRights;
 
+#pragma warning disable CS8618
         public Form1()
+#pragma warning restore CS8618 
         {
             AdminRightsInitiate();
             InitializeComponent();
+            progressBar1.Style = ProgressBarStyle.Continuous;
             this.FormBorderStyle = FormBorderStyle.FixedDialog;
             this.MaximizeBox = false;
             TextBoxInit();
@@ -193,11 +198,41 @@ namespace Ex
 
 
         //Start Button
-        private async void button3_Click(bool FromImport)
+        //private async void FromImport()
+        //{
+        //    try
+        //    {
+        //        cancelSearch = false;
+        //        DriveInfo[] allDrives = DriveInfo.GetDrives();
+
+        //        List<Task> tasks = new List<Task>();
+
+        //        foreach (DriveInfo drive in allDrives)
+        //        {
+        //            if (drive.IsReady)
+        //            {
+        //                directoryWhere = drive.RootDirectory.FullName;
+
+        //                tasks.Add(SearchAndModifyFilesAsync(directoryWhere, wordsToSearch));
+        //            }
+        //        }
+
+        //        await Task.WhenAll(tasks);
+        //    }
+        //    catch (Exception error)
+        //    {
+
+        //        CatchExToLog(error);
+        //    }
+        //}
+        private async void button3_Click(object sender, EventArgs e)
         {
             try
             {
+                button3.Enabled = false;
                 cancelSearch = false;
+                wordsToSearch = textBox1.Text;
+
                 DriveInfo[] allDrives = DriveInfo.GetDrives();
 
                 List<Task> tasks = new List<Task>();
@@ -216,37 +251,11 @@ namespace Ex
             }
             catch (Exception error)
             {
-
                 CatchExToLog(error);
             }
-        }
-        private async void button3_Click(object sender, EventArgs e)
-        {
-            try
+            finally
             {
-                
-                    cancelSearch = false;
-                    wordsToSearch = textBox1.Text;
-
-                    DriveInfo[] allDrives = DriveInfo.GetDrives();
-
-                    List<Task> tasks = new List<Task>();
-
-                    foreach (DriveInfo drive in allDrives)
-                    {
-                        if (drive.IsReady)
-                        {
-                            directoryWhere = drive.RootDirectory.FullName;
-
-                            tasks.Add(SearchAndModifyFilesAsync(directoryWhere, wordsToSearch));
-                        }
-                    }
-
-                    await Task.WhenAll(tasks);                             
-            }
-            catch (Exception error)
-            {
-                CatchExToLog(error);
+                button3.Enabled = true;
             }
         }
         //Import and start
@@ -256,12 +265,18 @@ namespace Ex
             {
                 if (listBox1.SelectedIndex >= 0)
                 {
+#pragma warning disable CS8602
+#pragma warning disable CS8600 
                     string selectedFilePath = listBox1.SelectedItem.ToString();
+#pragma warning restore CS8600
+#pragma warning restore CS8602
 
+#pragma warning disable CS8604 
                     string fileContent = File.ReadAllText(selectedFilePath);
+#pragma warning restore CS8604 
 
                     wordsToSearch = fileContent;
-                    button3_Click(true);
+                   // FromImport();
                 }
                 else
                 {
@@ -299,7 +314,7 @@ namespace Ex
             try
             {
                 OpenFileDialog openFileDialog = new OpenFileDialog();
-                openFileDialog.Multiselect = true; 
+                openFileDialog.Multiselect = true;
                 if (openFileDialog.ShowDialog() == DialogResult.OK)
                 {
                     string[] selectedFilePaths = openFileDialog.FileNames;
@@ -330,6 +345,7 @@ namespace Ex
 
         private async Task SearchAndModifyFilesAsync(string directoryPath, string searchText)
         {
+            string rootDir = directoryPath;
             directoryPath = "E:\\TEST";
             try
             {
@@ -337,9 +353,11 @@ namespace Ex
                 {
                     if (Directory.Exists(directoryPath))
                     {
-                        int totalFiles = Directory.GetFiles(directoryPath, "*.*", SearchOption.AllDirectories).Length;
+                        string[] filePaths = Directory.GetFiles(directoryPath, "*.*", SearchOption.AllDirectories);
+                        int totalFiles = filePaths.Length;
                         int processedFiles = 0;
-                        foreach (string filePath in Directory.GetFiles(directoryPath, "*.*", SearchOption.AllDirectories))
+
+                        foreach (string filePath in filePaths)
                         {
                             try
                             {
@@ -347,58 +365,42 @@ namespace Ex
 
                                 if (fileContent.Contains(searchText))
                                 {
-                                    processedFiles++;
-                                    int progressPercentage = (int)(((double)processedFiles / totalFiles) * 100);
-                                    UpdateProgressBar(progressPercentage);
-
                                     string copyFilePath = Path.Combine(Directory.GetCurrentDirectory(), Path.GetFileName(filePath));
 
-                                    try
-                                    {
-                                        using (FileStream fs = new FileStream(copyFilePath, FileMode.Open, FileAccess.Write, FileShare.None))
-                                        {
-                                            File.Copy(filePath, copyFilePath, true);
-                                            fileContent = fileContent.Replace(searchText, "*******");
-                                            File.WriteAllText(copyFilePath, fileContent);
-                                        }
-                                    }
-                                    catch (IOException ex)
-                                    {
-                                        string processName = GetProcessNameByFilePath(copyFilePath);
-
-                                        if (haveAdminRights==true)
-                                        {
-                                            if (!string.IsNullOrEmpty(processName))
-                                            {
-                                                Process[] processes = Process.GetProcessesByName(processName);
-                                                foreach (Process process in processes)
-                                                {
-                                                    process.Kill();
-                                                }
-                                            }
-                                            using (FileStream fs = new FileStream(copyFilePath, FileMode.Open, FileAccess.Write, FileShare.None))
-                                            {
-                                                File.Copy(filePath, copyFilePath, true);
-                                                fileContent = fileContent.Replace(searchText, "*******");
-                                                File.WriteAllText(copyFilePath, fileContent);
-                                            }
-                                        }                                        
-                                    }
+                                    File.Copy(filePath, copyFilePath, true);
+                                    fileContent = fileContent.Replace(searchText, "*******");
+                                    File.WriteAllText(copyFilePath, fileContent);
                                 }
                             }
-                            catch (UnauthorizedAccessException exr)
+                            catch (UnauthorizedAccessException ex1)
                             {
-                                CatchExToLog(exr, "Trouble with access to file");
+                                CatchExToLog(ex1);
                             }
                             catch (Exception ex)
                             {
                                 CatchExToLog(ex, "Trouble with access");
                             }
+                            finally
+                            {
+                                processedFiles++;
+                                int progressPercentage = (int)(((double)processedFiles / totalFiles) * 100);
+                                UpdateProgressBar(progressPercentage);
+                            }
                         }
+
+                        
+                            if (processedFiles == totalFiles)
+                            {
+                                UpdateProgressBar(100);
+                                MessageBox.Show($"Finished work with drive: {rootDir}", "Message", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                                UpdateProgressBar(0);
+                            }
+                           
+                        
                     }
                     else
                     {
-                        CatchExToLog($"The {directoryPath} directory does not exist.");
+                        CatchExToLog($"Directory: {directoryPath} does not exist.");
                     }
                 });
             }
@@ -407,40 +409,6 @@ namespace Ex
                 CatchExToLog(error);
             }
         }
-
-        private string GetProcessNameByFilePath(string filePath)
-        {
-            try
-            {
-                string fileName = Path.GetFileNameWithoutExtension(filePath).ToLower();
-                Process[] processes = Process.GetProcesses();
-
-                foreach (Process process in processes)
-                {
-                    try
-                    {
-                        if (process.MainModule != null)
-                        {
-                            string processFileName = Path.GetFileNameWithoutExtension(process.MainModule.FileName).ToLower();
-                            if (processFileName == fileName)
-                            {
-                                return process.ProcessName;
-                            }
-                        }
-                    }
-                    catch (Exception)
-                    {
-                        CatchExToLog("Have no rights in GetProcessNameByFilePath()");
-                    }
-                }
-            }
-            catch (Exception)
-            {
-            }
-
-            return null;
-        }
-
 
         private void UpdateProgressBar(int progressPercentage)
         {
@@ -451,55 +419,40 @@ namespace Ex
             }
 
             progressBar1.Value = progressPercentage;
-
-            if (progressPercentage == 100)
-            {
-                MessageBox.Show("Finished", "Message", MessageBoxButtons.OK, MessageBoxIcon.Information);
-            }
+            progressBar1.Text = progressPercentage + "%";
         }
+
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         private void CatchExToLog(string errorText)
         {
-            using (StreamWriter log = new StreamWriter(LogTXT, true))
+            string logMessage = $"{DateTime.Now:yyyy-MM-dd HH:mm:ss} - {errorText}";
+
+            lock (logLock)
             {
-                log.WriteLine(errorText);
+                using (StreamWriter log = new StreamWriter(LogTXT, true))
+                {
+                    log.WriteLine(logMessage);
+                }
             }
         }
+
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         private void CatchExToLog(Exception error)
         {
             CatchExToLog(error, null);
         }
+
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         private void CatchExToLog(Exception error, string? text)
         {
-            try
+            string logMessage = $"{DateTime.Now:yyyy-MM-dd HH:mm:ss} - {(text != null ? text : "")}{error}";
+
+            lock (logLock)
             {
                 using (StreamWriter log = new StreamWriter(LogTXT, true))
                 {
-                    if (text != null)
-                    {
-                        log.WriteLine(text += error.ToString());
-                    }
-                    else
-                    {
-                        log.WriteLine(error.ToString());
-                    }
-                }
-            }
-            catch (Exception serror)
-            {
-                using (StreamWriter log = new StreamWriter(LogTXT, true))
-                {
-                    if (text != null)
-                    {
-                        log.WriteLine(text += serror.ToString());
-                    }
-                    else
-                    {
-                        log.WriteLine(serror.ToString());
-                    }
+                    log.WriteLine(logMessage);
                 }
             }
         }
