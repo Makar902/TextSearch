@@ -36,6 +36,7 @@
             progressBar1 = new ProgressBar();
             button5 = new Button();
             button1 = new Button();
+            button6 = new Button();
             SuspendLayout();
             // 
             // listBox1
@@ -98,7 +99,7 @@
             button5.Name = "button5";
             button5.Size = new Size(75, 23);
             button5.TabIndex = 6;
-            button5.Text = "Stop";
+            button5.Text = "Cancel search";
             button5.UseVisualStyleBackColor = true;
             button5.Click += button5_Click;
             // 
@@ -112,11 +113,22 @@
             button1.UseVisualStyleBackColor = true;
             button1.Click += button1_ClickAsync;
             // 
+            // button6
+            // 
+            button6.Location = new Point(12, 90);
+            button6.Name = "button6";
+            button6.Size = new Size(75, 23);
+            button6.TabIndex = 8;
+            button6.Text = "Stop ";
+            button6.UseVisualStyleBackColor = true;
+            button6.Click += button6_Click;
+            // 
             // Form1
             // 
             AutoScaleDimensions = new SizeF(7F, 15F);
             AutoScaleMode = AutoScaleMode.Font;
             ClientSize = new Size(804, 450);
+            Controls.Add(button6);
             Controls.Add(button1);
             Controls.Add(button5);
             Controls.Add(progressBar1);
@@ -141,5 +153,6 @@
         private ProgressBar progressBar1;
         private Button button5;
         private Button button1;
+        private Button button6;
     }
 }

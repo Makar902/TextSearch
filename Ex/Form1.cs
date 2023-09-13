@@ -8,7 +8,6 @@ using System.Security.Principal;
 using System.Text;
 using System.Threading.Tasks;
 using System.Windows.Forms;
-using static System.Runtime.InteropServices.JavaScript.JSType;
 
 namespace Ex
 {
@@ -17,12 +16,12 @@ namespace Ex
 #pragma warning disable CS0414
         private volatile bool cancelSearch = false;
 #pragma warning restore CS0414
-        private const string LogTXT = "Log.txt";
+        private const string LogTXT = "log.txt";
         private string directoryWhere;
         private string wordsToSearch;
         private const string TextBoxMessege = "Enter your text here...";
-        private object logLock = new object();
         private bool haveAdminRights;
+
 
 #pragma warning disable CS8618
         public Form1()
@@ -36,10 +35,10 @@ namespace Ex
             TextBoxInit();
             OnForm();
             MenuStripInit();
-            
+
         }
 
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        //[MethodImpl(MethodImplOptions.AggressiveInlining)]
         private void TextBoxInit()
         {
             try
@@ -52,7 +51,8 @@ namespace Ex
             }
             catch (Exception error)
             {
-                CatchExToLog(error);
+              ErorHandling.CatchExToLog(error);
+                
             }
         }
 
@@ -67,7 +67,7 @@ namespace Ex
             }
             catch (Exception error)
             {
-                CatchExToLog(error);
+                ErorHandling.CatchExToLog(error);
             }
         }
 
@@ -82,7 +82,7 @@ namespace Ex
             }
             catch (Exception error)
             {
-                CatchExToLog(error);
+                ErorHandling.CatchExToLog(error);
             }
         }
 
@@ -115,7 +115,7 @@ namespace Ex
                 fileMenuItem.DropDownItems.Add(changeWayToSave);
                 fileMenuItem.DropDownItems.Add(openLog);
 
-                openLog.Click += OpenLog_Click;                //generateReport.Click += GenerateReport_Click;
+                openLog.Click += OpenLog_Click;
 
                 ToolStripMenuItem helpMenuItem = new ToolStripMenuItem("Help");
                 ToolStripMenuItem helpWithBrowse = new ToolStripMenuItem("Help with browsing file");
@@ -132,7 +132,7 @@ namespace Ex
             }
             catch (Exception error)
             {
-                CatchExToLog(error);
+                ErorHandling.CatchExToLog(error);
             }
         }
 
@@ -140,55 +140,17 @@ namespace Ex
         {
             try
             {
-                string currentDirectory = Directory.GetCurrentDirectory() + "\\" + LogTXT;
-                MessageBox.Show(currentDirectory);
-                Process.Start(currentDirectory);
+                string fileDir = Directory.GetCurrentDirectory() + "\\" + "Log.txt";
+                Process.Start("notepad.exe", fileDir);
             }
             catch (Exception error)
             {
 
-                CatchExToLog(error);
+                ErorHandling.CatchExToLog(error);
             }
         }
 
-        //private void GenerateReport_Click(object? sender, EventArgs e)
-        //{
-        //    try
-        //    {
-        //        using (FolderBrowserDialog folderDialog = new FolderBrowserDialog())
-        //        {
-        //            folderDialog.Description = "Select way...";
-        //            folderDialog.SelectedPath = @"C:\";
 
-        //            DialogResult result = folderDialog.ShowDialog();
-
-        //            if (result == DialogResult.OK && !string.IsNullOrWhiteSpace(folderDialog.SelectedPath))
-        //            {
-        //                string selectedFolderPath = folderDialog.SelectedPath;
-        //                try
-        //                {
-        //                    using (StreamWriter userReportTXT = new StreamWriter(selectedFolderPath + ".txt", true))
-        //                    {
-        //                        List<FileInfo> resultFromSearch = SearchAndModifyFiles(directoryWhere, wordsToSearch, true);
-        //                        for (int i = 0; i < resultFromSearch.ToArray().Length; i++)
-        //                        {
-        //                            userReportTXT.WriteLine(resultFromSearch[i]);
-        //                        }
-        //                        userReportTXT.Close();
-        //                    }
-        //                }
-        //                catch (Exception hereEr)
-        //                {
-        //                    CatchExToLog(hereEr, "Here with writer: ");
-        //                }
-        //            }
-        //        }
-        //    }
-        //    catch (Exception error)
-        //    {
-        //        CatchExToLog(error);
-        //    }
-        //}
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         private void AdminRightsInitiate()
         {
@@ -210,7 +172,7 @@ namespace Ex
             }
             catch (Exception error)
             {
-                CatchExToLog(error);
+                ErorHandling.CatchExToLog(error);
             }
         }
 
@@ -241,7 +203,7 @@ namespace Ex
             catch (Exception error)
             {
 
-                CatchExToLog(error);
+                ErorHandling.CatchExToLog(error);
             }
         }
         private async void button3_Click(object sender, EventArgs e)
@@ -270,7 +232,7 @@ namespace Ex
             }
             catch (Exception error)
             {
-                CatchExToLog(error);
+                ErorHandling.CatchExToLog(error);
             }
             finally
             {
@@ -304,7 +266,7 @@ namespace Ex
             }
             catch (Exception error)
             {
-                CatchExToLog(error);
+                ErorHandling.CatchExToLog(error);
             }
         }
         // exit button
@@ -324,7 +286,7 @@ namespace Ex
             }
             catch (Exception error)
             {
-                CatchExToLog(error);
+                ErorHandling.CatchExToLog(error);
             }
         }
         // Browse button
@@ -346,10 +308,10 @@ namespace Ex
             }
             catch (Exception error)
             {
-                CatchExToLog(error);
+                ErorHandling.CatchExToLog(error);
             }
         }
-        // StopSearchButton
+        // CancelSearchButton
         private void button5_Click(object sender, EventArgs e)
         {
             try
@@ -358,8 +320,13 @@ namespace Ex
             }
             catch (Exception error)
             {
-                CatchExToLog(error);
+                ErorHandling.CatchExToLog(error);
             }
+        }
+        //StopSearch
+        private void button6_Click(object sender, EventArgs e)
+        {
+
         }
 
         private async Task SearchAndModifyFilesAsync(string directoryPath, string searchText)
@@ -374,58 +341,70 @@ namespace Ex
                     {
                         string[] filePaths = Directory.GetFiles(directoryPath, "*.*", SearchOption.AllDirectories);
                         int totalFiles = filePaths.Length;
+                        int totalFilesW = 0;
                         int processedFiles = 0;
 
                         foreach (string filePath in filePaths)
                         {
-                            try
+                            if (cancelSearch != true)
                             {
-                                string fileContent = File.ReadAllText(filePath);
-
-                                if (fileContent.Contains(searchText))
+                                try
                                 {
-                                    string copyFilePath = Path.Combine(Directory.GetCurrentDirectory(), Path.GetFileName(filePath));
+                                    string fileContent = File.ReadAllText(filePath);
 
-                                    File.Copy(filePath, copyFilePath, true);
-                                    fileContent = fileContent.Replace(searchText, "*******");
-                                    File.WriteAllText(copyFilePath, fileContent);
+                                    if (fileContent.Contains(searchText))
+                                    {
+                                        totalFilesW++;
+                                        string copyFilePath = Path.Combine(Directory.GetCurrentDirectory(), Path.GetFileName(filePath));
+
+                                        File.Copy(filePath, copyFilePath, true);
+                                        fileContent = fileContent.Replace(searchText, "*******");
+                                        File.WriteAllText(copyFilePath, fileContent);
+                                    }
+                                }
+                                catch (UnauthorizedAccessException ex1)
+                                {
+                                    ErorHandling.CatchExToLog(ex1);
+                                }
+                                catch (Exception ex)
+                                {
+                                    ErorHandling.CatchExToLog(ex, "Trouble with access");
+                                }
+                                finally
+                                {
+                                    processedFiles++;
+                                    int progressPercentage = (int)(((double)processedFiles / totalFiles) * 100);
+                                    UpdateProgressBar(progressPercentage);
                                 }
                             }
-                            catch (UnauthorizedAccessException ex1)
+                            else if (cancelSearch == true)
                             {
-                                CatchExToLog(ex1);
-                            }
-                            catch (Exception ex)
-                            {
-                                CatchExToLog(ex, "Trouble with access");
-                            }
-                            finally
-                            {
-                                processedFiles++;
-                                int progressPercentage = (int)(((double)processedFiles / totalFiles) * 100);
-                                UpdateProgressBar(progressPercentage);
+                                string resultBreak = $"Files was copy from drive {rootDir}: {processedFiles}/{totalFilesW}";
+                                MessageBox.Show(resultBreak);
+                                UpdateProgressBar(0);
+                                return;
                             }
                         }
 
-                        
-                            if (processedFiles == totalFiles)
-                            {
-                                UpdateProgressBar(100);
-                                MessageBox.Show($"Finished work with drive: {rootDir}", "Message", MessageBoxButtons.OK, MessageBoxIcon.Information);
-                                UpdateProgressBar(0);
-                            }
-                           
-                        
+
+                        if (processedFiles == totalFiles)
+                        {
+                            UpdateProgressBar(100);
+                            MessageBox.Show($"Finished work with drive: {rootDir}", "Message", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                            UpdateProgressBar(0);
+                        }
+
+
                     }
                     else
                     {
-                        CatchExToLog($"Directory: {directoryPath} does not exist.");
+                        ErorHandling.CatchExToLog($"Directory: {directoryPath} does not exist.");
                     }
                 });
             }
             catch (Exception error)
             {
-                CatchExToLog(error);
+                ErorHandling.CatchExToLog(error);
             }
         }
 
@@ -440,40 +419,6 @@ namespace Ex
             progressBar1.Value = progressPercentage;
             progressBar1.Text = progressPercentage + "%";
         }
-
-
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        private void CatchExToLog(string errorText)
-        {
-            string logMessage = $"{DateTime.Now:yyyy-MM-dd HH:mm:ss} - {errorText}";
-
-            lock (logLock)
-            {
-                using (StreamWriter log = new StreamWriter(LogTXT, true))
-                {
-                    log.WriteLine(logMessage);
-                }
-            }
-        }
-
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        private void CatchExToLog(Exception error)
-        {
-            CatchExToLog(error, null);
-        }
-
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        private void CatchExToLog(Exception error, string? text)
-        {
-            string logMessage = $"{DateTime.Now:yyyy-MM-dd HH:mm:ss} - {(text != null ? text : "")}{error}";
-
-            lock (logLock)
-            {
-                using (StreamWriter log = new StreamWriter(LogTXT, true))
-                {
-                    log.WriteLine(logMessage);
-                }
-            }
-        }
+ 
     }
 }
