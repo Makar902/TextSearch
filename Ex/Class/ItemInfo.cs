@@ -6,10 +6,10 @@ using System.Text;
 using System.Threading.Tasks;
 using System.Windows.Forms;
 
-namespace Ex
+namespace Ex.Class
 {
-	internal struct ItemInfo
-	{
+    internal struct ItemInfo
+    {
         public string FilePath { get; set; }
         public long FileSizeBytes { get; set; }
         public DateTime CreationDate { get; set; }
@@ -40,7 +40,7 @@ namespace Ex
             catch (Exception error)
             {
 
-                ErorHandling.CatchExToLog(error);
+                ErrorHandling.CatchExToLog(error);
             }
 #pragma warning disable CS8603 
             return null;

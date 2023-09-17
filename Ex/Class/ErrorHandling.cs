@@ -5,9 +5,9 @@ using System.Runtime.CompilerServices;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace Ex
+namespace Ex.Class
 {
-    internal static class ErorHandling
+    internal static class ErrorHandling
     {
         private static object logLock = new object();
         public static string LogTXT = "log.txt";

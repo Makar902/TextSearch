@@ -6,12 +6,12 @@ using System.Security.Principal;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace Ex
+namespace Ex.Class
 {
     public class FileManager
     {
         public static bool haveAdminRights;
-       // public static Form1 form;
+        // public static Form1 form;
         public static void AdminRightsInitiate()
         {
             try
@@ -32,10 +32,16 @@ namespace Ex
             }
             catch (Exception error)
             {
-                ErorHandling.CatchExToLog(error);
+                ErrorHandling.CatchExToLog(error);
             }
         }
-
+        public static async Task Wait()
+        {
+            while (Form1.stopSearch == true)
+            {
+                await Task.Delay(100); 
+            }
+        }
 
     }
 }

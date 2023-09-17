@@ -1,4 +1,5 @@
-﻿using FluentCommand.Extensions;
+﻿using Ex.Class;
+using FluentCommand.Extensions;
 using System;
 using System.Diagnostics;
 using System.IO;
@@ -16,14 +17,17 @@ namespace Ex
     {
 #pragma warning disable CS0414
         internal volatile bool cancelSearch = false;
+        internal volatile static bool stopSearch;
 #pragma warning restore CS0414
         private string directoryWhere;
         private string wordsToSearch;
         private const string TextBoxMessege = "Enter your text here...";
-        public  string userChPath;
-        private string userReportPath;  
-        private List<ItemInfo> itemInfos=new List<ItemInfo>();
+        public string userChPath;
+        private string userReportPath;
+        private List<ItemInfo> itemInfos = new List<ItemInfo>();
         internal static List<ItemInfo> currentData = new List<ItemInfo>();
+        internal static nuint diskCount;
+        internal static bool iterationWas;
 
 
 
@@ -53,7 +57,7 @@ namespace Ex
             }
             catch (Exception error)
             {
-                ErorHandling.CatchExToLog(error);
+                ErrorHandling.CatchExToLog(error);
             }
         }
 
@@ -68,7 +72,7 @@ namespace Ex
             }
             catch (Exception error)
             {
-                ErorHandling.CatchExToLog(error);
+                ErrorHandling.CatchExToLog(error);
             }
         }
 
@@ -83,11 +87,11 @@ namespace Ex
             }
             catch (Exception error)
             {
-                ErorHandling.CatchExToLog(error);
+                ErrorHandling.CatchExToLog(error);
             }
         }
 
-      
+
 
         private void MenuStripInit()
         {
@@ -123,7 +127,7 @@ namespace Ex
             }
             catch (Exception error)
             {
-                ErorHandling.CatchExToLog(error);
+                ErrorHandling.CatchExToLog(error);
             }
         }
 
@@ -131,9 +135,9 @@ namespace Ex
         {
             try
             {
-                using(FolderBrowserDialog dialog=new FolderBrowserDialog())
+                using (FolderBrowserDialog dialog = new FolderBrowserDialog())
                 {
-                    dialog.RootFolder=Environment.SpecialFolder.Desktop;
+                    dialog.RootFolder = Environment.SpecialFolder.Desktop;
                     DialogResult = dialog.ShowDialog();
                     if (DialogResult == DialogResult.OK && !string.IsNullOrWhiteSpace(dialog.SelectedPath))
                     {
@@ -142,7 +146,7 @@ namespace Ex
                 }
                 if (!string.IsNullOrEmpty(userReportPath))
                 {
-                    using (StreamWriter writer = new StreamWriter(userReportPath,true))
+                    using (StreamWriter writer = new StreamWriter(userReportPath, true))
                     {
                         for (int i = 0; i < itemInfos.Count; i++)
                         {
@@ -156,15 +160,16 @@ namespace Ex
                             writer.WriteLine();
                         }
                     }
+
                 }
                 else
                 {
-                    ErorHandling.CatchExToLog("User report path was`t set");
+                    ErrorHandling.CatchExToLog("User report path was`t set");
                 }
             }
             catch (Exception error)
             {
-                ErorHandling.CatchExToLog(error);
+                ErrorHandling.CatchExToLog(error);
             }
         }
 
@@ -188,7 +193,7 @@ namespace Ex
             catch (Exception error)
             {
 
-                ErorHandling.CatchExToLog(error);
+                ErrorHandling.CatchExToLog(error);
             }
         }
 
@@ -202,12 +207,11 @@ namespace Ex
             catch (Exception error)
             {
 
-                ErorHandling.CatchExToLog(error);
+                ErrorHandling.CatchExToLog(error);
             }
         }
 
 
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
 
 
 
@@ -216,17 +220,24 @@ namespace Ex
         {
             try
             {
+                iterationWas = false;
+                diskCount = 0;
                 cancelSearch = false;
+                stopSearch = false;
                 DriveInfo[] allDrives = DriveInfo.GetDrives();
 
                 List<Task> tasks = new List<Task>();
 
                 foreach (DriveInfo drive in allDrives)
                 {
+                    diskCount++;
+                }
+                foreach (DriveInfo drive in allDrives)
+                {
                     if (drive.IsReady)
                     {
                         directoryWhere = drive.RootDirectory.FullName;
-
+                        iterationWas = true;
                         tasks.Add(SearchAndModifyFilesAsync(directoryWhere, wordsToSearch));
                     }
                 }
@@ -236,16 +247,18 @@ namespace Ex
             catch (Exception error)
             {
 
-                ErorHandling.CatchExToLog(error);
+                ErrorHandling.CatchExToLog(error);
             }
         }
         private async void button3_Click(object sender, EventArgs e)
         {
             try
             {
+                iterationWas = false;
                 button3.Enabled = false;
                 cancelSearch = false;
                 wordsToSearch = textBox1.Text;
+                diskCount = 0;
 
                 DriveInfo[] allDrives = DriveInfo.GetDrives();
 
@@ -253,21 +266,25 @@ namespace Ex
 
                 foreach (DriveInfo drive in allDrives)
                 {
+                    diskCount++;
+                }
+                foreach (DriveInfo drive in allDrives)
+                {
                     if (drive.IsReady)
                     {
                         directoryWhere = drive.RootDirectory.FullName;
-
+                        iterationWas = true;
                         tasks.Add(SearchAndModifyFilesAsync(directoryWhere, wordsToSearch));
                     }
                 }
 
                 await Task.WhenAll(tasks);
-                itemInfos.Clear(); 
+                itemInfos.Clear();
                 itemInfos.AddRange(currentData);
             }
             catch (Exception error)
             {
-                ErorHandling.CatchExToLog(error);
+                ErrorHandling.CatchExToLog(error);
             }
             finally
             {
@@ -301,7 +318,7 @@ namespace Ex
             }
             catch (Exception error)
             {
-                ErorHandling.CatchExToLog(error);
+                ErrorHandling.CatchExToLog(error);
             }
         }
         // exit button
@@ -321,7 +338,7 @@ namespace Ex
             }
             catch (Exception error)
             {
-                ErorHandling.CatchExToLog(error);
+                ErrorHandling.CatchExToLog(error);
             }
         }
         // Browse button
@@ -343,9 +360,11 @@ namespace Ex
             }
             catch (Exception error)
             {
-                ErorHandling.CatchExToLog(error);
+                ErrorHandling.CatchExToLog(error);
             }
         }
+
+
         // CancelSearchButton
         private void button5_Click(object sender, EventArgs e)
         {
@@ -355,13 +374,31 @@ namespace Ex
             }
             catch (Exception error)
             {
-                ErorHandling.CatchExToLog(error);
+                ErrorHandling.CatchExToLog(error);
             }
         }
-        //StopSearch
+        //Stop&ContinueSearch
         private void button6_Click(object sender, EventArgs e)
         {
+            try
+            {
+                try
+                {
+                    stopSearch = true;
+                    cancelSearch = true;
+                }
+                catch (Exception)
+                {
 
+                    ErrorHandling.CatchExToLog("Trouble with setting StopSearch&CancelSearch");
+                }
+
+
+            }
+            catch (Exception error)
+            {
+                ErrorHandling.CatchExToLog(error);
+            }
         }
 
 
@@ -373,18 +410,18 @@ namespace Ex
             {
                 BeginInvoke(new Action<int>(UpdateProgressBar), progressPercentage);
                 return;
-            }           
+            }
         }
 
 
         private async Task SearchAndModifyFilesAsync(string directoryPath, string searchText)
         {
-            string rootDir = directoryPath;
-            directoryPath = "E:\\TEST";
             try
             {
-                await Task.Run(() =>
+                await Task.Run(async () =>
                 {
+                    string rootDir = directoryPath;
+                    directoryPath = "E:\\TEST";
 
                     if (Directory.Exists(directoryPath))
                     {
@@ -395,7 +432,7 @@ namespace Ex
 
                         foreach (string filePath in filePaths)
                         {
-                            if (cancelSearch != true)
+                            if (cancelSearch == false)
                             {
                                 try
                                 {
@@ -407,7 +444,7 @@ namespace Ex
                                         totalFilesW++;
                                         if (!(userChPath.IsNullOrEmpty()))
                                         {
-                                            copyFilePath = Path.Combine(userChPath, Path.GetFileName(filePath));                                         
+                                            copyFilePath = Path.Combine(userChPath, Path.GetFileName(filePath));
                                         }
                                         ItemInfo infoToAdd = new ItemInfo()
                                         {
@@ -427,11 +464,11 @@ namespace Ex
                                 }
                                 catch (UnauthorizedAccessException ex1)
                                 {
-                                    ErorHandling.CatchExToLog(ex1);
+                                    ErrorHandling.CatchExToLog(ex1);
                                 }
                                 catch (Exception ex)
                                 {
-                                    ErorHandling.CatchExToLog(ex, "Trouble with access");
+                                    ErrorHandling.CatchExToLog(ex, "Trouble with access");
                                 }
                                 finally
                                 {
@@ -442,32 +479,57 @@ namespace Ex
                             }
                             else if (cancelSearch == true)
                             {
-                                string resultBreak = $"Files was copy from drive {rootDir}: {processedFiles}/{totalFilesW}";
-                                MessageBox.Show(resultBreak);
-                                UpdateProgressBar(0);
-                                return;
+                                if (stopSearch == true)
+                                {
+                                   await FileManager.Wait();
+                                    processedFiles++;
+                                    
+                                }
+                                else if (stopSearch == false)
+                                {
+                                    string resultBreak = $"Canceled work with{rootDir}";
+                                    MessageBox.Show(resultBreak, "Abort", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                                    UpdateProgressBar(0);
+                                    return;
+                                }
+                                
                             }
-                        }
 
 
-                        if (processedFiles == totalFiles)
-                        {
-                            UpdateProgressBar(100);
-                            MessageBox.Show($"Finished work with drive: {rootDir}", "Message", MessageBoxButtons.OK, MessageBoxIcon.Information);
-                            UpdateProgressBar(0);
+                            if (processedFiles == totalFiles)
+                            {
+                                UpdateProgressBar(100);
+                                MessageBox.Show($"Finished work with drive: {rootDir}", "Message", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                                UpdateProgressBar(0);
+                            }
                         }
                     }
                     else
                     {
-                        ErorHandling.CatchExToLog($"Directory: {directoryPath} does not exist.");
+                        ErrorHandling.CatchExToLog($"Directory: {directoryPath} does not exist.");
                     }
+
                 });
             }
             catch (Exception error)
             {
-                ErorHandling.CatchExToLog(error);
+                ErrorHandling.CatchExToLog(error);
             }
         }
+        //Continue button
+        private void button7_Click(object sender, EventArgs e)
+        {
+            try
+            {
+                stopSearch = false;
+                cancelSearch = false;
 
+            }
+            catch (Exception error)
+            {
+
+                ErrorHandling.CatchExToLog(error);
+            }
+        }
     }
 }
