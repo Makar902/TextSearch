@@ -1,4 +1,5 @@
-﻿using System;
+﻿using FluentCommand.Extensions;
+using System;
 using System.Diagnostics;
 using System.IO;
 using System.Linq.Expressions;
@@ -14,31 +15,32 @@ namespace Ex
     public partial class Form1 : Form
     {
 #pragma warning disable CS0414
-        private volatile bool cancelSearch = false;
+        internal volatile bool cancelSearch = false;
 #pragma warning restore CS0414
-        private const string LogTXT = "log.txt";
         private string directoryWhere;
         private string wordsToSearch;
         private const string TextBoxMessege = "Enter your text here...";
-        private bool haveAdminRights;
+        public  string userChPath;
+        private string userReportPath;  
+        private List<ItemInfo> itemInfos=new List<ItemInfo>();
+        internal static List<ItemInfo> currentData = new List<ItemInfo>();
+
 
 
 #pragma warning disable CS8618
         public Form1()
 #pragma warning restore CS8618 
         {
-            AdminRightsInitiate();
+            FileManager.AdminRightsInitiate();
             InitializeComponent();
             progressBar1.Style = ProgressBarStyle.Continuous;
             this.FormBorderStyle = FormBorderStyle.FixedDialog;
             this.MaximizeBox = false;
             TextBoxInit();
-            OnForm();
             MenuStripInit();
 
         }
 
-        //[MethodImpl(MethodImplOptions.AggressiveInlining)]
         private void TextBoxInit()
         {
             try
@@ -51,8 +53,7 @@ namespace Ex
             }
             catch (Exception error)
             {
-              ErorHandling.CatchExToLog(error);
-                
+                ErorHandling.CatchExToLog(error);
             }
         }
 
@@ -86,19 +87,7 @@ namespace Ex
             }
         }
 
-        private void OnForm()
-        {
-            //comboBoxWords = new ComboBox();
-            //comboBoxWords.Location = new Point(10, 120);
-            //comboBoxWords.Size = new Size(200, 30);
-            //this.Controls.Add(comboBoxWords);
-
-            //resultsLabel = new Label();
-            //resultsLabel.Location = new Point(10, 160);
-            //resultsLabel.Size = new Size(300, 100);
-            //resultsLabel.Text = "Results will be displayed here.";
-            //this.Controls.Add(resultsLabel);
-        }
+      
 
         private void MenuStripInit()
         {
@@ -111,11 +100,13 @@ namespace Ex
                 ToolStripMenuItem generateReport = new ToolStripMenuItem("Generate report");
                 ToolStripMenuItem changeWayToSave = new ToolStripMenuItem("Change way to save");
 
+                fileMenuItem.DropDownItems.Add(openLog);
                 fileMenuItem.DropDownItems.Add(generateReport);
                 fileMenuItem.DropDownItems.Add(changeWayToSave);
-                fileMenuItem.DropDownItems.Add(openLog);
 
                 openLog.Click += OpenLog_Click;
+                changeWayToSave.Click += ChangeWayToSave_Click;
+                generateReport.Click += GenerateReport_Click;
 
                 ToolStripMenuItem helpMenuItem = new ToolStripMenuItem("Help");
                 ToolStripMenuItem helpWithBrowse = new ToolStripMenuItem("Help with browsing file");
@@ -136,6 +127,71 @@ namespace Ex
             }
         }
 
+        private void GenerateReport_Click(object? sender, EventArgs e)
+        {
+            try
+            {
+                using(FolderBrowserDialog dialog=new FolderBrowserDialog())
+                {
+                    dialog.RootFolder=Environment.SpecialFolder.Desktop;
+                    DialogResult = dialog.ShowDialog();
+                    if (DialogResult == DialogResult.OK && !string.IsNullOrWhiteSpace(dialog.SelectedPath))
+                    {
+                        userReportPath = dialog.SelectedPath;
+                    }
+                }
+                if (!string.IsNullOrEmpty(userReportPath))
+                {
+                    using (StreamWriter writer = new StreamWriter(userReportPath,true))
+                    {
+                        for (int i = 0; i < itemInfos.Count; i++)
+                        {
+                            ItemInfo item = itemInfos[i];
+                            writer.WriteLine($"File Path: {item.FilePath}");
+                            writer.WriteLine($"File Size (Bytes): {item.FileSizeBytes}");
+                            writer.WriteLine($"Creation Date: {item.CreationDate}");
+                            writer.WriteLine($"Last Modified Date: {item.LastModifiedDate}");
+                            writer.WriteLine($"File Extension: {item.FileExtension}");
+                            writer.WriteLine($"MIME Type: {item.MimeType}");
+                            writer.WriteLine();
+                        }
+                    }
+                }
+                else
+                {
+                    ErorHandling.CatchExToLog("User report path was`t set");
+                }
+            }
+            catch (Exception error)
+            {
+                ErorHandling.CatchExToLog(error);
+            }
+        }
+
+        private void ChangeWayToSave_Click(object? sender, EventArgs e)
+        {
+            try
+            {
+                using (FolderBrowserDialog folderBrowserDialog = new FolderBrowserDialog())
+                {
+                    folderBrowserDialog.RootFolder = Environment.SpecialFolder.MyComputer;
+
+                    DialogResult result = folderBrowserDialog.ShowDialog();
+
+                    if (result == DialogResult.OK && !string.IsNullOrWhiteSpace(folderBrowserDialog.SelectedPath))
+                    {
+                        MessageBox.Show("Selected directory: " + folderBrowserDialog.SelectedPath);
+                        userChPath = folderBrowserDialog.SelectedPath;
+                    }
+                }
+            }
+            catch (Exception error)
+            {
+
+                ErorHandling.CatchExToLog(error);
+            }
+        }
+
         private void OpenLog_Click(object? sender, EventArgs e)
         {
             try
@@ -152,29 +208,6 @@ namespace Ex
 
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        private void AdminRightsInitiate()
-        {
-            try
-            {
-                WindowsIdentity currentIdentity = WindowsIdentity.GetCurrent();
-                WindowsPrincipal currentPrincipal = new WindowsPrincipal(currentIdentity);
-
-                if (currentPrincipal.IsInRole(WindowsBuiltInRole.Administrator))
-                {
-                    MessageBox.Show("The program was launched with the rights of an administrator.");
-                    haveAdminRights = true;
-                }
-                else
-                {
-                    MessageBox.Show("The program is not launched with administrator rights.May be some trouble with acces");
-                    haveAdminRights = false;
-                }
-            }
-            catch (Exception error)
-            {
-                ErorHandling.CatchExToLog(error);
-            }
-        }
 
 
 
@@ -229,6 +262,8 @@ namespace Ex
                 }
 
                 await Task.WhenAll(tasks);
+                itemInfos.Clear(); 
+                itemInfos.AddRange(currentData);
             }
             catch (Exception error)
             {
@@ -329,6 +364,19 @@ namespace Ex
 
         }
 
+
+        internal void UpdateProgressBar(int progressPercentage)
+        {
+            progressBar1.Value = progressPercentage;
+            progressBar1.Text = progressPercentage + "%";
+            if (InvokeRequired)
+            {
+                BeginInvoke(new Action<int>(UpdateProgressBar), progressPercentage);
+                return;
+            }           
+        }
+
+
         private async Task SearchAndModifyFilesAsync(string directoryPath, string searchText)
         {
             string rootDir = directoryPath;
@@ -337,6 +385,7 @@ namespace Ex
             {
                 await Task.Run(() =>
                 {
+
                     if (Directory.Exists(directoryPath))
                     {
                         string[] filePaths = Directory.GetFiles(directoryPath, "*.*", SearchOption.AllDirectories);
@@ -354,8 +403,22 @@ namespace Ex
 
                                     if (fileContent.Contains(searchText))
                                     {
+                                        string copyFilePath = Path.Combine(Environment.CurrentDirectory, Path.GetFileName(filePath));
                                         totalFilesW++;
-                                        string copyFilePath = Path.Combine(Directory.GetCurrentDirectory(), Path.GetFileName(filePath));
+                                        if (!(userChPath.IsNullOrEmpty()))
+                                        {
+                                            copyFilePath = Path.Combine(userChPath, Path.GetFileName(filePath));                                         
+                                        }
+                                        ItemInfo infoToAdd = new ItemInfo()
+                                        {
+                                            FilePath = copyFilePath,
+                                            FileSizeBytes = new FileInfo(filePath).Length,
+                                            CreationDate = File.GetCreationTime(filePath),
+                                            LastModifiedDate = File.GetLastWriteTime(filePath),
+                                            FileExtension = Path.GetExtension(filePath),
+                                            MimeType = ItemInfo.GetMimeType(filePath)
+                                        };
+                                        currentData.Add(infoToAdd);
 
                                         File.Copy(filePath, copyFilePath, true);
                                         fileContent = fileContent.Replace(searchText, "*******");
@@ -393,8 +456,6 @@ namespace Ex
                             MessageBox.Show($"Finished work with drive: {rootDir}", "Message", MessageBoxButtons.OK, MessageBoxIcon.Information);
                             UpdateProgressBar(0);
                         }
-
-
                     }
                     else
                     {
@@ -408,17 +469,5 @@ namespace Ex
             }
         }
 
-        private void UpdateProgressBar(int progressPercentage)
-        {
-            if (InvokeRequired)
-            {
-                BeginInvoke(new Action<int>(UpdateProgressBar), progressPercentage);
-                return;
-            }
-
-            progressBar1.Value = progressPercentage;
-            progressBar1.Text = progressPercentage + "%";
-        }
- 
     }
 }

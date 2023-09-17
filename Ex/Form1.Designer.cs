@@ -28,6 +28,7 @@
         /// </summary>
         private void InitializeComponent()
         {
+            System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(Form1));
             listBox1 = new ListBox();
             button2 = new Button();
             button3 = new Button();
@@ -95,7 +96,7 @@
             // 
             // button5
             // 
-            button5.Location = new Point(12, 61);
+            button5.Location = new Point(12, 90);
             button5.Name = "button5";
             button5.Size = new Size(75, 23);
             button5.TabIndex = 6;
@@ -115,7 +116,7 @@
             // 
             // button6
             // 
-            button6.Location = new Point(12, 90);
+            button6.Location = new Point(12, 61);
             button6.Name = "button6";
             button6.Size = new Size(75, 23);
             button6.TabIndex = 8;
@@ -137,8 +138,9 @@
             Controls.Add(button3);
             Controls.Add(button2);
             Controls.Add(listBox1);
+            Icon = (Icon)resources.GetObject("$this.Icon");
             Name = "Form1";
-            Text = "Form1";
+            Text = "WordSearch";
             ResumeLayout(false);
             PerformLayout();
         }
