@@ -198,7 +198,31 @@ namespace Ex
             {
                 Microsoft.WindowsAPICodePack.Dialogs.TaskDialog taskDialog = new Microsoft.WindowsAPICodePack.Dialogs.TaskDialog();
                 taskDialog.Caption = "About";
-                taskDialog.InstructionText = "Welcome, User!\r\n\r\nThis is a program designed to search for text within all the files on your drives. You can enter the text you're interested in, and the program will scan all the files on your computer, searching for matches. When a match is found, the program will highlight it and replace the text with \"*******,\" leaving the original file untouched.\r\n\r\nKey Features of the Program:\r\n- Search for text in all files on your computer.\r\n- Option to replace the found text with \"*******.\"\r\n- Save the found files to a directory of your choice.\r\n- View the results in a convenient format.\r\n\r\nInstructions for Use:\r\n1. Enter the text you want to search for in the text box.\r\n2. Click the \"Search\" button to start the search process.\r\n3. You can cancel the search at any time by clicking the \"Cancel Search\" button.\r\n4. To stop and resume the search, use the \"Stop/Continue Search\" button.\r\n5. To change the directory where the found files will be saved, click the \"Change Way to Save\" button and select a new directory.\r\n6. To generate a report of the found files, click the \"Generate Report\" button and choose a location to save the report.\r\n\r\nWe provide this program to make it easier for you to work with files and find the information you need.\r\n\r\nThank you for using our program!\r\n\r\nSincerely,\r\n[Text searcher]\r\n";
+                taskDialog.InstructionText = @"Welcome, User!
+
+This program is designed to search for text within all the files on your drives and provides a powerful yet easy-to-use file management tool. Below are instructions on how to use the program:
+
+Key Features of the Program:
+- Search for Text: You can enter the text you're interested in, and the program will scan all the files on your computer, searching for matches.
+- Replace Text: The program allows you to replace the found text with ""*******"" while leaving the original file untouched.
+- Save Found Files: You can choose a directory where the found files will be saved.
+- View Results: The program displays the results in a convenient format, making it easy to access and manage the information you need.
+
+Instructions for Use:
+1. Enter Search Text: Start by entering the text you want to search for in the text box at the top of the window.
+2. Initiate Search: Click the ""Start"" button to begin the search process. The program will check all drives on your computer for the specified text in files.
+3. Cancel Search: You can cancel the search at any time by clicking the ""Cancel Search"" button.
+4. Stop and Resume: To temporarily stop and resume the search, use the ""Stop/Continue Search"" button.
+5. Change Save Location: To change the directory where the found files will be saved, click the ""Change Way to Save"" button and select a new directory.
+6. Generate Report: If you want to create a report of the found files, click the ""Generate Report"" button and choose a location to save the report.
+7. Clear Results: To clear the displayed information in List box, click the ""Clear"" button.
+
+We provide this program to simplify your file management tasks and help you find the information you need efficiently.
+
+Thank you for using our program!
+
+Sincerely,
+[Text Searcher]";
 
                 taskDialog.StandardButtons = TaskDialogStandardButtons.Close;
 
