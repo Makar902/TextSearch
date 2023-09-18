@@ -7,12 +7,13 @@ using System.Threading.Tasks;
 
 namespace Ex.Class
 {
+    // Comment: This internal class handles error logging and provides methods to log exceptions.
     internal static class ErrorHandling
     {
         private static object logLock = new object();
-        public static string LogTXT = "log.txt";
+        public static string LogTXT = "log.txt"; // Comment: Specifies the name of the log file.
 
-
+        // Comment: Logs a custom error message to the log file.
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static async Task CatchExToLog(string errorText)
         {
@@ -29,12 +30,14 @@ namespace Ex.Class
             });
         }
 
+        // Comment: Logs an exception to the log file.
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static async Task CatchExToLog(Exception error)
         {
             await CatchExToLog(error, null);
         }
 
+        // Comment: Logs an exception along with additional text to the log file.
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static async Task CatchExToLog(Exception error, string? text)
         {
@@ -51,6 +54,6 @@ namespace Ex.Class
                 }
             });
         }
-
     }
+
 }

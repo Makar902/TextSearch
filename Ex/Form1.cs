@@ -24,7 +24,7 @@ namespace Ex
 #pragma warning restore CS0414
         private string directoryWhere;
         private string wordsToSearch;
-        private const string TextBoxMessege = "Enter your text here...";
+        private const string TextBoxMessage = "Enter your text here...";
         public string userChPath;
         private string userReportPath;
         private List<ItemInfo> itemInfos = new List<ItemInfo>();
@@ -37,45 +37,24 @@ namespace Ex
 
 #pragma warning disable CS8618
         public Form1()
-#pragma warning restore CS8618 
         {
             InitializeComponent();
-            IntiAsyncF();
+            InitAsyncF();
 
             ProgressUpdated += UpdateListBox2;
 
             progressBar1.Style = ProgressBarStyle.Continuous;
             this.FormBorderStyle = FormBorderStyle.FixedDialog;
             this.MaximizeBox = false;
-
-            
         }
 
-
-        private async void UpdateProgress(ItemInfo info)
-        {
-            try
-            {
-                listBox2.Invoke((MethodInvoker)delegate
-                {
-                    listBox2.Items.Add($"Copying file: {info.FilePath}");
-                    listBox2.SelectedIndex = listBox2.Items.Count - 1;
-                    listBox2.SelectedIndex = -1;
-                });
-            }
-            catch (Exception error)
-            {
-                await ErrorHandling.CatchExToLog(error);
-            }
-        }
+       
         internal async void UpdateListBox2(object sender, ItemInfo e, string destinationPath)
         {
             try
             {
                 string logEntry = $"File: {e.FilePath} was copied to: {destinationPath}, Time: {DateTime.Now}";
-
                 listBox2.Items.Add(logEntry);
-
                 listBox2.TopIndex = listBox2.Items.Count - 1;
             }
             catch (Exception error)
@@ -84,27 +63,27 @@ namespace Ex
             }
         }
 
-        private async Task IntiAsyncF()
+        // Comment: Initializes the application.
+        private async Task InitAsyncF()
         {
             try
             {
                 await FileManager.AdminRightsInitiate();
-
                 await TextBoxInit();
                 await MenuStripInit();
-
             }
             catch (Exception error)
             {
-
                 await ErrorHandling.CatchExToLog(error);
             }
         }
+
+        // Comment: Initializes the text box.
         private async Task TextBoxInit()
         {
             try
             {
-                textBox1.Text = TextBoxMessege;
+                textBox1.Text = TextBoxMessage;
                 textBox1.Enter += TextBox1_Enter;
                 textBox1.Leave += TextBox1_Leave;
                 TextBox1_Leave(textBox1, null);
@@ -116,13 +95,14 @@ namespace Ex
             }
         }
 
+        // Comment: Handles the event when entering the text box.
         private async void TextBox1_Enter(object? sender, EventArgs e)
         {
             try
             {
                 await Task.Run(() =>
                 {
-                    if (textBox1.Text == TextBoxMessege)
+                    if (textBox1.Text == TextBoxMessage)
                     {
                         textBox1.Text = "";
                     }
@@ -134,13 +114,14 @@ namespace Ex
             }
         }
 
+        // Comment: Handles the event when leaving the text box.
         private async void TextBox1_Leave(object? sender, EventArgs? e)
         {
             try
             {
                 if (string.IsNullOrWhiteSpace(textBox1.Text))
                 {
-                    textBox1.Text = TextBoxMessege;
+                    textBox1.Text = TextBoxMessage;
                 }
             }
             catch (Exception error)
@@ -151,11 +132,11 @@ namespace Ex
 
 
 
+        // Comment: Initializes the menu strip.
         private async Task MenuStripInit()
         {
             try
             {
-
                 MenuStrip menuStrip = new MenuStrip();
 
                 ToolStripMenuItem fileMenuItem = new ToolStripMenuItem("File");
@@ -174,9 +155,7 @@ namespace Ex
                 ToolStripMenuItem helpMenuItem = new ToolStripMenuItem("Help");
                 ToolStripMenuItem About = new ToolStripMenuItem("About...");
 
-
                 helpMenuItem.DropDownItems.Add(About);
-
                 About.Click += About_Click;
 
                 menuStrip.Items.Add(fileMenuItem);
@@ -184,7 +163,6 @@ namespace Ex
 
                 this.MainMenuStrip = menuStrip;
                 this.Controls.Add(menuStrip);
-
             }
             catch (Exception error)
             {
@@ -192,6 +170,7 @@ namespace Ex
             }
         }
 
+        // Comment: Handles the event when clicking "About" in the menu.
         private async void About_Click(object? sender, EventArgs e)
         {
             try
@@ -230,7 +209,7 @@ Sincerely,
 
                 if (result == TaskDialogResult.Close)
                 {
-
+                    // Handle close action if needed.
                 }
             }
             catch (Exception error)
@@ -239,6 +218,7 @@ Sincerely,
             }
         }
 
+        // Comment: Handles the event when clicking "Generate report" in the menu.
         private async void GenerateReport_Click(object? sender, EventArgs e)
         {
             try
@@ -270,11 +250,10 @@ Sincerely,
                                 writer.WriteLine();
                             }
                         }
-
                     }
                     else
                     {
-                        await ErrorHandling.CatchExToLog("User report path was`t set");
+                        await ErrorHandling.CatchExToLog("User report path wasn't set");
                     }
                 });
             }
@@ -284,6 +263,7 @@ Sincerely,
             }
         }
 
+        // Comment: Handles the event when clicking "Change way to save" in the menu.
         private async void ChangeWayToSave_Click(object? sender, EventArgs e)
         {
             try
@@ -306,11 +286,11 @@ Sincerely,
             }
             catch (Exception error)
             {
-
                 await ErrorHandling.CatchExToLog(error);
             }
         }
 
+        // Comment: Handles the event when clicking "Open Log.txt" in the menu.
         private async void OpenLog_Click(object? sender, EventArgs e)
         {
             try
@@ -323,7 +303,6 @@ Sincerely,
             }
             catch (Exception error)
             {
-
                 await ErrorHandling.CatchExToLog(error);
             }
         }
@@ -331,8 +310,7 @@ Sincerely,
 
 
 
-
-        //Start Button
+        //Comment: Start from Browsing button
         private async Task FromImport()
         {
             try
@@ -370,6 +348,7 @@ Sincerely,
                 await ErrorHandling.CatchExToLog(error);
             }
         }
+        // Comment: Initiates the asynchronous search process when the "Start" button is clicked.
         private async void button3_Click(object sender, EventArgs e)
         {
             try
@@ -379,7 +358,6 @@ Sincerely,
                 button7.Enabled = true;
                 await Task.Run(async () =>
                 {
-
                     iterationWas = false;
                     button3.Enabled = false;
                     button1.Enabled = false;
@@ -420,7 +398,8 @@ Sincerely,
                 button1.Enabled = true;
             }
         }
-        //Import and start
+
+        // Comment: Initiates the asynchronous search process when the "Import and start" button is clicked.
         private async void button1_ClickAsync(object sender, EventArgs e)
         {
             try
@@ -430,23 +409,14 @@ Sincerely,
                 button7.Enabled = true;
                 if (listBox1.SelectedIndex >= 0)
                 {
-#pragma warning disable CS8602
-#pragma warning disable CS8600
                     string selectedFilePath = listBox1.SelectedItem.ToString();
-#pragma warning restore CS8600
-#pragma warning restore CS8602
-
-#pragma warning disable CS8604 
                     string fileContent = File.ReadAllText(selectedFilePath);
-#pragma warning restore CS8604 
-
                     wordsToSearch = fileContent;
                     await FromImport();
-
                 }
                 else
                 {
-                    MessageBox.Show("Select file from list.", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                    MessageBox.Show("Select file from the list.", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
                 }
             }
             catch (Exception error)
@@ -454,14 +424,15 @@ Sincerely,
                 await ErrorHandling.CatchExToLog(error);
             }
         }
-        // exit button
+
+        // Comment: Exits the program when the "Exit" button is clicked.
         private async void button2_Click(object sender, EventArgs e)
         {
             try
             {
                 await Task.Run(() =>
                 {
-                    DialogResult result = MessageBox.Show("Exit program?", "Exit", MessageBoxButtons.YesNo);
+                    DialogResult result = MessageBox.Show("Exit the program?", "Exit", MessageBoxButtons.YesNo);
 
                     if (result == DialogResult.Yes)
                     {
@@ -469,6 +440,7 @@ Sincerely,
                     }
                     else if (result == DialogResult.No)
                     {
+                        // Continue with program execution.
                     }
                 });
             }
@@ -477,7 +449,8 @@ Sincerely,
                 await ErrorHandling.CatchExToLog(error);
             }
         }
-        // Browse button
+
+        //Comment:  Browse button
         private async void button4_Click(object sender, EventArgs e)
         {
             try
@@ -504,7 +477,7 @@ Sincerely,
         }
 
 
-        // CancelSearchButton
+        //Comment:  Cancel Search Button
         private async void button5_Click(object sender, EventArgs e)
         {
             try
@@ -516,7 +489,7 @@ Sincerely,
                 await ErrorHandling.CatchExToLog(error);
             }
         }
-        //Stop&ContinueSearch
+        //Comment: Stop button
         private async void button6_Click(object sender, EventArgs e)
         {
             try
@@ -548,7 +521,7 @@ Sincerely,
             }
         }
 
-
+        //Comment: Update progress bar func
         internal async void UpdateProgressBar(int progressPercentage)
         {
             try
@@ -570,7 +543,7 @@ Sincerely,
             }
         }
 
-
+        //Comment:  Serch and Copy  func
         private async Task SearchAndModifyFilesAsync(string directoryPath, string searchText)
         {
             try
@@ -691,6 +664,8 @@ Sincerely,
                 await ErrorHandling.CatchExToLog(error);
             }
         }
+
+        //Comment: Continue serch button
         private async void button7_Click(object sender, EventArgs e)
         {
             try
@@ -708,7 +683,7 @@ Sincerely,
                 await ErrorHandling.CatchExToLog(error);
             }
         }
-
+        //Comment: Cleart listBox2 button
         private void button8_Click(object sender, EventArgs e)
         {
             listBox2.Items.Clear();
