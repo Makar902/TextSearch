@@ -8,7 +8,7 @@ using System.Windows.Forms;
 
 namespace Ex.Class 
 {
-    internal struct ItemInfo
+    public struct ItemInfo
     {
         public string FilePath { get; set; }
         public long FileSizeBytes { get; set; }

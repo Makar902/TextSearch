@@ -1,6 +1,8 @@
 ﻿using Ex.Class;
 using FluentCommand.Extensions;
+using Microsoft.WindowsAPICodePack.Dialogs;
 using System;
+using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
 using System.Linq.Expressions;
@@ -9,7 +11,6 @@ using System.Runtime.InteropServices;
 using System.Security.Principal;
 using System.Text;
 using System.Threading.Tasks;
-using Microsoft.WindowsAPICodePack.Dialogs;
 using System.Windows.Forms;
 using TaskDialogButton = Microsoft.WindowsAPICodePack.Dialogs.TaskDialogButton;
 
@@ -31,7 +32,8 @@ namespace Ex
         internal static nuint diskCount;
         internal static bool iterationWas;
 
-
+        public delegate void ProgressUpdatedEventHandler(object sender, ItemInfo e, string destinationPath);
+        public event ProgressUpdatedEventHandler ProgressUpdated;
 
 #pragma warning disable CS8618
         public Form1()
@@ -39,11 +41,48 @@ namespace Ex
         {
             InitializeComponent();
             IntiAsyncF();
+
+            ProgressUpdated += UpdateListBox2;
+
             progressBar1.Style = ProgressBarStyle.Continuous;
             this.FormBorderStyle = FormBorderStyle.FixedDialog;
             this.MaximizeBox = false;
 
         }
+
+
+        private async void UpdateProgress(ItemInfo info)
+        {
+            try
+            {
+                listBox2.Invoke((MethodInvoker)delegate
+                {
+                    listBox2.Items.Add($"Copying file: {info.FilePath}");
+                    listBox2.SelectedIndex = listBox2.Items.Count - 1;
+                    listBox2.SelectedIndex = -1;
+                });
+            }
+            catch (Exception error)
+            {
+                await ErrorHandling.CatchExToLog(error);
+            }
+        }
+        internal async void UpdateListBox2(object sender, ItemInfo e, string destinationPath)
+        {
+            try
+            {
+                string logEntry = $"File: {e.FilePath} was copied to: {destinationPath}, Time: {DateTime.Now}";
+
+                listBox2.Items.Add(logEntry);
+
+                listBox2.TopIndex = listBox2.Items.Count - 1;
+            }
+            catch (Exception error)
+            {
+                await ErrorHandling.CatchExToLog(error);
+            }
+        }
+
         private async Task IntiAsyncF()
         {
             try
@@ -166,7 +205,7 @@ namespace Ex
 
                 if (result == TaskDialogResult.Close)
                 {
-                    // Користувач закрив діалогове вікно.
+
                 }
             }
             catch (Exception error)
@@ -451,7 +490,7 @@ namespace Ex
         {
             try
             {
-                button5.Enabled = true;
+                button5.Enabled = false;
                 try
                 {
 
@@ -464,7 +503,10 @@ namespace Ex
 
                     await ErrorHandling.CatchExToLog("Trouble with setting StopSearch&CancelSearch");
                 }
-
+                finally
+                {
+                    button5.Enabled = true;
+                }
 
 
             }
@@ -474,7 +516,7 @@ namespace Ex
             }
             finally
             {
-                button5.Enabled = false;
+                button5.Enabled = true;
             }
         }
 
@@ -549,6 +591,8 @@ namespace Ex
                                             File.Copy(filePath, copyFilePath, true);
                                             fileContent = fileContent.Replace(searchText, "*******");
                                             File.WriteAllText(copyFilePath, fileContent);
+
+                                            ProgressUpdated?.Invoke(this, infoToAdd, userReportPath);
                                         });
                                     }
                                 }
@@ -567,7 +611,10 @@ namespace Ex
                                         processedFiles++;
                                         int progressPercentage = (int)(((double)processedFiles / totalFiles) * 100);
                                         UpdateProgressBar(progressPercentage);
+                                        //UpdateProgress(info); 
+
                                     });
+
                                 }
                             }
                             else if (cancelSearch == true)
@@ -584,6 +631,7 @@ namespace Ex
                                     string resultBreak = $"Canceled work with{rootDir}";
                                     MessageBox.Show(resultBreak, "Abort", MessageBoxButtons.OK, MessageBoxIcon.Information);
                                     UpdateProgressBar(0);
+                                    //UpdateProgress(null);
                                     return;
 
                                 }
@@ -596,8 +644,13 @@ namespace Ex
                                 await Task.Run(() =>
                                 {
                                     UpdateProgressBar(100);
+                                    //UpdateProgress(100);
+
                                     MessageBox.Show($"Finished work with drive: {rootDir}", "Message", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                                    //MessageBox.Show($"Finished work with drive: {rootDir}", "Message", MessageBoxButtons.OK, MessageBoxIcon.Information);
+
                                     UpdateProgressBar(0);
+                                    // UpdateProgress(0);
                                 });
                             }
                         }
@@ -631,6 +684,11 @@ namespace Ex
 
                 await ErrorHandling.CatchExToLog(error);
             }
+        }
+
+        private void button8_Click(object sender, EventArgs e)
+        {
+            listBox2.Items.Clear();
         }
     }
 }
