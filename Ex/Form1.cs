@@ -48,6 +48,7 @@ namespace Ex
             this.FormBorderStyle = FormBorderStyle.FixedDialog;
             this.MaximizeBox = false;
 
+            
         }
 
 
@@ -349,6 +350,9 @@ namespace Ex
         {
             try
             {
+                button5.Enabled = true;
+                button6.Enabled = true;
+                button7.Enabled = true;
                 await Task.Run(async () =>
                 {
 
@@ -397,6 +401,9 @@ namespace Ex
         {
             try
             {
+                button5.Enabled = true;
+                button6.Enabled = true;
+                button7.Enabled = true;
                 if (listBox1.SelectedIndex >= 0)
                 {
 #pragma warning disable CS8602
@@ -451,8 +458,8 @@ namespace Ex
         {
             try
             {
-                await Task.Run(() =>
-                {
+                button1.Enabled = true;
+                
                     OpenFileDialog openFileDialog = new OpenFileDialog();
                     openFileDialog.Multiselect = true;
                     if (openFileDialog.ShowDialog() == DialogResult.OK)
@@ -464,7 +471,7 @@ namespace Ex
                             listBox1.Items.Add(filePath);
                         }
                     }
-                });
+                
             }
             catch (Exception error)
             {
@@ -503,10 +510,7 @@ namespace Ex
 
                     await ErrorHandling.CatchExToLog("Trouble with setting StopSearch&CancelSearch");
                 }
-                finally
-                {
-                    button5.Enabled = true;
-                }
+
 
 
             }
@@ -516,7 +520,7 @@ namespace Ex
             }
             finally
             {
-                button5.Enabled = true;
+                //button5.Enabled = true;
             }
         }
 
@@ -611,7 +615,6 @@ namespace Ex
                                         processedFiles++;
                                         int progressPercentage = (int)(((double)processedFiles / totalFiles) * 100);
                                         UpdateProgressBar(progressPercentage);
-                                        //UpdateProgress(info); 
 
                                     });
 
@@ -631,7 +634,6 @@ namespace Ex
                                     string resultBreak = $"Canceled work with{rootDir}";
                                     MessageBox.Show(resultBreak, "Abort", MessageBoxButtons.OK, MessageBoxIcon.Information);
                                     UpdateProgressBar(0);
-                                    //UpdateProgress(null);
                                     return;
 
                                 }
@@ -644,13 +646,11 @@ namespace Ex
                                 await Task.Run(() =>
                                 {
                                     UpdateProgressBar(100);
-                                    //UpdateProgress(100);
 
                                     MessageBox.Show($"Finished work with drive: {rootDir}", "Message", MessageBoxButtons.OK, MessageBoxIcon.Information);
-                                    //MessageBox.Show($"Finished work with drive: {rootDir}", "Message", MessageBoxButtons.OK, MessageBoxIcon.Information);
 
                                     UpdateProgressBar(0);
-                                    // UpdateProgress(0);
+                                    button5.Enabled = true;
                                 });
                             }
                         }
@@ -667,7 +667,6 @@ namespace Ex
                 await ErrorHandling.CatchExToLog(error);
             }
         }
-        //Continue button
         private async void button7_Click(object sender, EventArgs e)
         {
             try
