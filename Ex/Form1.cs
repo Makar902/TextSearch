@@ -42,6 +42,7 @@ namespace Ex
             InitAsyncF();
 
             ProgressUpdated += UpdateListBox2;
+            listBox2.HorizontalScrollbar = true;
 
             progressBar1.Style = ProgressBarStyle.Continuous;
             this.FormBorderStyle = FormBorderStyle.FixedDialog;
