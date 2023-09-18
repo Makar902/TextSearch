@@ -153,7 +153,7 @@
             Controls.Add(listBox1);
             Icon = (Icon)resources.GetObject("$this.Icon");
             Name = "Form1";
-            Text = "WordSearch";
+            Text = "TextSearcher";
             ResumeLayout(false);
             PerformLayout();
         }

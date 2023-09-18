@@ -9,7 +9,9 @@ using System.Runtime.InteropServices;
 using System.Security.Principal;
 using System.Text;
 using System.Threading.Tasks;
+using Microsoft.WindowsAPICodePack.Dialogs;
 using System.Windows.Forms;
+using TaskDialogButton = Microsoft.WindowsAPICodePack.Dialogs.TaskDialogButton;
 
 namespace Ex
 {
@@ -35,17 +37,30 @@ namespace Ex
         public Form1()
 #pragma warning restore CS8618 
         {
-            FileManager.AdminRightsInitiate();
             InitializeComponent();
+            IntiAsyncF();
             progressBar1.Style = ProgressBarStyle.Continuous;
             this.FormBorderStyle = FormBorderStyle.FixedDialog;
             this.MaximizeBox = false;
-            TextBoxInit();
-            MenuStripInit();
 
         }
+        private async Task IntiAsyncF()
+        {
+            try
+            {
+                await FileManager.AdminRightsInitiate();
 
-        private void TextBoxInit()
+                await TextBoxInit();
+                await MenuStripInit();
+
+            }
+            catch (Exception error)
+            {
+
+                await ErrorHandling.CatchExToLog(error);
+            }
+        }
+        private async Task TextBoxInit()
         {
             try
             {
@@ -57,26 +72,29 @@ namespace Ex
             }
             catch (Exception error)
             {
-                ErrorHandling.CatchExToLog(error);
+                await ErrorHandling.CatchExToLog(error);
             }
         }
 
-        private void TextBox1_Enter(object? sender, EventArgs e)
+        private async void TextBox1_Enter(object? sender, EventArgs e)
         {
             try
             {
-                if (textBox1.Text == TextBoxMessege)
+                await Task.Run(() =>
                 {
-                    textBox1.Text = "";
-                }
+                    if (textBox1.Text == TextBoxMessege)
+                    {
+                        textBox1.Text = "";
+                    }
+                });
             }
             catch (Exception error)
             {
-                ErrorHandling.CatchExToLog(error);
+                await ErrorHandling.CatchExToLog(error);
             }
         }
 
-        private void TextBox1_Leave(object? sender, EventArgs? e)
+        private async void TextBox1_Leave(object? sender, EventArgs? e)
         {
             try
             {
@@ -87,16 +105,17 @@ namespace Ex
             }
             catch (Exception error)
             {
-                ErrorHandling.CatchExToLog(error);
+                await ErrorHandling.CatchExToLog(error);
             }
         }
 
 
 
-        private void MenuStripInit()
+        private async Task MenuStripInit()
         {
             try
             {
+
                 MenuStrip menuStrip = new MenuStrip();
 
                 ToolStripMenuItem fileMenuItem = new ToolStripMenuItem("File");
@@ -113,101 +132,135 @@ namespace Ex
                 generateReport.Click += GenerateReport_Click;
 
                 ToolStripMenuItem helpMenuItem = new ToolStripMenuItem("Help");
-                ToolStripMenuItem helpWithBrowse = new ToolStripMenuItem("Help with browsing file");
-                ToolStripMenuItem helpWithChangeWayToSave = new ToolStripMenuItem("Help with changing way to save");
+                ToolStripMenuItem About = new ToolStripMenuItem("About...");
 
-                helpMenuItem.DropDownItems.Add(helpWithBrowse);
-                helpMenuItem.DropDownItems.Add(helpWithChangeWayToSave);
+
+                helpMenuItem.DropDownItems.Add(About);
+
+                About.Click += About_Click;
 
                 menuStrip.Items.Add(fileMenuItem);
                 menuStrip.Items.Add(helpMenuItem);
 
                 this.MainMenuStrip = menuStrip;
                 this.Controls.Add(menuStrip);
+
             }
             catch (Exception error)
             {
-                ErrorHandling.CatchExToLog(error);
+                await ErrorHandling.CatchExToLog(error);
             }
         }
 
-        private void GenerateReport_Click(object? sender, EventArgs e)
+        private async void About_Click(object? sender, EventArgs e)
         {
             try
             {
-                using (FolderBrowserDialog dialog = new FolderBrowserDialog())
+                Microsoft.WindowsAPICodePack.Dialogs.TaskDialog taskDialog = new Microsoft.WindowsAPICodePack.Dialogs.TaskDialog();
+                taskDialog.Caption = "About";
+                taskDialog.InstructionText = "Welcome, User!\r\n\r\nThis is a program designed to search for text within all the files on your drives. You can enter the text you're interested in, and the program will scan all the files on your computer, searching for matches. When a match is found, the program will highlight it and replace the text with \"*******,\" leaving the original file untouched.\r\n\r\nKey Features of the Program:\r\n- Search for text in all files on your computer.\r\n- Option to replace the found text with \"*******.\"\r\n- Save the found files to a directory of your choice.\r\n- View the results in a convenient format.\r\n\r\nInstructions for Use:\r\n1. Enter the text you want to search for in the text box.\r\n2. Click the \"Search\" button to start the search process.\r\n3. You can cancel the search at any time by clicking the \"Cancel Search\" button.\r\n4. To stop and resume the search, use the \"Stop/Continue Search\" button.\r\n5. To change the directory where the found files will be saved, click the \"Change Way to Save\" button and select a new directory.\r\n6. To generate a report of the found files, click the \"Generate Report\" button and choose a location to save the report.\r\n\r\nWe provide this program to make it easier for you to work with files and find the information you need.\r\n\r\nThank you for using our program!\r\n\r\nSincerely,\r\n[Text searcher]\r\n";
+
+                taskDialog.StandardButtons = TaskDialogStandardButtons.Close;
+
+                TaskDialogResult result = taskDialog.Show();
+
+                if (result == TaskDialogResult.Close)
                 {
-                    dialog.RootFolder = Environment.SpecialFolder.Desktop;
-                    DialogResult = dialog.ShowDialog();
-                    if (DialogResult == DialogResult.OK && !string.IsNullOrWhiteSpace(dialog.SelectedPath))
-                    {
-                        userReportPath = dialog.SelectedPath;
-                    }
+                    // Користувач закрив діалогове вікно.
                 }
-                if (!string.IsNullOrEmpty(userReportPath))
+            }
+            catch (Exception error)
+            {
+                await ErrorHandling.CatchExToLog(error);
+            }
+        }
+
+        private async void GenerateReport_Click(object? sender, EventArgs e)
+        {
+            try
+            {
+                await Task.Run(async () =>
                 {
-                    using (StreamWriter writer = new StreamWriter(userReportPath, true))
+                    using (FolderBrowserDialog dialog = new FolderBrowserDialog())
                     {
-                        for (int i = 0; i < itemInfos.Count; i++)
+                        dialog.RootFolder = Environment.SpecialFolder.Desktop;
+                        DialogResult = dialog.ShowDialog();
+                        if (DialogResult == DialogResult.OK && !string.IsNullOrWhiteSpace(dialog.SelectedPath))
                         {
-                            ItemInfo item = itemInfos[i];
-                            writer.WriteLine($"File Path: {item.FilePath}");
-                            writer.WriteLine($"File Size (Bytes): {item.FileSizeBytes}");
-                            writer.WriteLine($"Creation Date: {item.CreationDate}");
-                            writer.WriteLine($"Last Modified Date: {item.LastModifiedDate}");
-                            writer.WriteLine($"File Extension: {item.FileExtension}");
-                            writer.WriteLine($"MIME Type: {item.MimeType}");
-                            writer.WriteLine();
+                            userReportPath = dialog.SelectedPath;
                         }
                     }
-
-                }
-                else
-                {
-                    ErrorHandling.CatchExToLog("User report path was`t set");
-                }
-            }
-            catch (Exception error)
-            {
-                ErrorHandling.CatchExToLog(error);
-            }
-        }
-
-        private void ChangeWayToSave_Click(object? sender, EventArgs e)
-        {
-            try
-            {
-                using (FolderBrowserDialog folderBrowserDialog = new FolderBrowserDialog())
-                {
-                    folderBrowserDialog.RootFolder = Environment.SpecialFolder.MyComputer;
-
-                    DialogResult result = folderBrowserDialog.ShowDialog();
-
-                    if (result == DialogResult.OK && !string.IsNullOrWhiteSpace(folderBrowserDialog.SelectedPath))
+                    if (!string.IsNullOrEmpty(userReportPath))
                     {
-                        MessageBox.Show("Selected directory: " + folderBrowserDialog.SelectedPath);
-                        userChPath = folderBrowserDialog.SelectedPath;
+                        using (StreamWriter writer = new StreamWriter(userReportPath, true))
+                        {
+                            for (int i = 0; i < itemInfos.Count; i++)
+                            {
+                                ItemInfo item = itemInfos[i];
+                                writer.WriteLine($"File Path: {item.FilePath}");
+                                writer.WriteLine($"File Size (Bytes): {item.FileSizeBytes}");
+                                writer.WriteLine($"Creation Date: {item.CreationDate}");
+                                writer.WriteLine($"Last Modified Date: {item.LastModifiedDate}");
+                                writer.WriteLine($"File Extension: {item.FileExtension}");
+                                writer.WriteLine($"MIME Type: {item.MimeType}");
+                                writer.WriteLine();
+                            }
+                        }
+
                     }
-                }
+                    else
+                    {
+                        await ErrorHandling.CatchExToLog("User report path was`t set");
+                    }
+                });
             }
             catch (Exception error)
             {
-
-                ErrorHandling.CatchExToLog(error);
+                await ErrorHandling.CatchExToLog(error);
             }
         }
 
-        private void OpenLog_Click(object? sender, EventArgs e)
+        private async void ChangeWayToSave_Click(object? sender, EventArgs e)
         {
             try
             {
-                string fileDir = Directory.GetCurrentDirectory() + "\\" + "Log.txt";
-                Process.Start("notepad.exe", fileDir);
+                await Task.Run(() =>
+                {
+                    using (FolderBrowserDialog folderBrowserDialog = new FolderBrowserDialog())
+                    {
+                        folderBrowserDialog.RootFolder = Environment.SpecialFolder.MyComputer;
+
+                        DialogResult result = folderBrowserDialog.ShowDialog();
+
+                        if (result == DialogResult.OK && !string.IsNullOrWhiteSpace(folderBrowserDialog.SelectedPath))
+                        {
+                            MessageBox.Show("Selected directory: " + folderBrowserDialog.SelectedPath);
+                            userChPath = folderBrowserDialog.SelectedPath;
+                        }
+                    }
+                });
             }
             catch (Exception error)
             {
 
-                ErrorHandling.CatchExToLog(error);
+                await ErrorHandling.CatchExToLog(error);
+            }
+        }
+
+        private async void OpenLog_Click(object? sender, EventArgs e)
+        {
+            try
+            {
+                await Task.Run(() =>
+                {
+                    string fileDir = Directory.GetCurrentDirectory() + "\\" + "Log.txt";
+                    Process.Start("notepad.exe", fileDir);
+                });
+            }
+            catch (Exception error)
+            {
+
+                await ErrorHandling.CatchExToLog(error);
             }
         }
 
@@ -216,90 +269,99 @@ namespace Ex
 
 
         //Start Button
-        private async void FromImport()
+        private async Task FromImport()
         {
             try
             {
-                iterationWas = false;
-                diskCount = 0;
-                cancelSearch = false;
-                stopSearch = false;
-                DriveInfo[] allDrives = DriveInfo.GetDrives();
-
-                List<Task> tasks = new List<Task>();
-
-                foreach (DriveInfo drive in allDrives)
+                await Task.Run(async () =>
                 {
-                    diskCount++;
-                }
-                foreach (DriveInfo drive in allDrives)
-                {
-                    if (drive.IsReady)
+                    iterationWas = false;
+                    diskCount = 0;
+                    cancelSearch = false;
+                    stopSearch = false;
+                    DriveInfo[] allDrives = DriveInfo.GetDrives();
+
+                    List<Task> tasks = new List<Task>();
+
+                    foreach (DriveInfo drive in allDrives)
                     {
-                        directoryWhere = drive.RootDirectory.FullName;
-                        iterationWas = true;
-                        tasks.Add(SearchAndModifyFilesAsync(directoryWhere, wordsToSearch));
+                        diskCount++;
                     }
-                }
+                    foreach (DriveInfo drive in allDrives)
+                    {
+                        if (drive.IsReady)
+                        {
+                            directoryWhere = drive.RootDirectory.FullName;
+                            iterationWas = true;
+                            tasks.Add(SearchAndModifyFilesAsync(directoryWhere, wordsToSearch));
+                        }
+                    }
 
-                await Task.WhenAll(tasks);
+                    await Task.WhenAll(tasks);
+                });
             }
             catch (Exception error)
             {
 
-                ErrorHandling.CatchExToLog(error);
+                await ErrorHandling.CatchExToLog(error);
             }
         }
         private async void button3_Click(object sender, EventArgs e)
         {
             try
             {
-                iterationWas = false;
-                button3.Enabled = false;
-                cancelSearch = false;
-                wordsToSearch = textBox1.Text;
-                diskCount = 0;
-
-                DriveInfo[] allDrives = DriveInfo.GetDrives();
-
-                List<Task> tasks = new List<Task>();
-
-                foreach (DriveInfo drive in allDrives)
+                await Task.Run(async () =>
                 {
-                    diskCount++;
-                }
-                foreach (DriveInfo drive in allDrives)
-                {
-                    if (drive.IsReady)
+
+                    iterationWas = false;
+                    button3.Enabled = false;
+                    button1.Enabled = false;
+                    cancelSearch = false;
+                    wordsToSearch = textBox1.Text;
+                    diskCount = 0;
+
+                    DriveInfo[] allDrives = DriveInfo.GetDrives();
+
+                    List<Task> tasks = new List<Task>();
+
+                    foreach (DriveInfo drive in allDrives)
                     {
-                        directoryWhere = drive.RootDirectory.FullName;
-                        iterationWas = true;
-                        tasks.Add(SearchAndModifyFilesAsync(directoryWhere, wordsToSearch));
+                        diskCount++;
                     }
-                }
+                    foreach (DriveInfo drive in allDrives)
+                    {
+                        if (drive.IsReady)
+                        {
+                            directoryWhere = drive.RootDirectory.FullName;
+                            iterationWas = true;
+                            tasks.Add(SearchAndModifyFilesAsync(directoryWhere, wordsToSearch));
+                        }
+                    }
 
-                await Task.WhenAll(tasks);
-                itemInfos.Clear();
-                itemInfos.AddRange(currentData);
+                    await Task.WhenAll(tasks);
+                    itemInfos.Clear();
+                    itemInfos.AddRange(currentData);
+                });
             }
             catch (Exception error)
             {
-                ErrorHandling.CatchExToLog(error);
+                await ErrorHandling.CatchExToLog(error);
             }
             finally
             {
                 button3.Enabled = true;
+                button1.Enabled = true;
             }
         }
         //Import and start
-        private void button1_ClickAsync(object sender, EventArgs e)
+        private async void button1_ClickAsync(object sender, EventArgs e)
         {
             try
             {
                 if (listBox1.SelectedIndex >= 0)
                 {
 #pragma warning disable CS8602
-#pragma warning disable CS8600 
+#pragma warning disable CS8600
                     string selectedFilePath = listBox1.SelectedItem.ToString();
 #pragma warning restore CS8600
 #pragma warning restore CS8602
@@ -309,7 +371,8 @@ namespace Ex
 #pragma warning restore CS8604 
 
                     wordsToSearch = fileContent;
-                    FromImport();
+                    await FromImport();
+
                 }
                 else
                 {
@@ -318,55 +381,61 @@ namespace Ex
             }
             catch (Exception error)
             {
-                ErrorHandling.CatchExToLog(error);
+                await ErrorHandling.CatchExToLog(error);
             }
         }
         // exit button
-        private void button2_Click(object sender, EventArgs e)
+        private async void button2_Click(object sender, EventArgs e)
         {
             try
             {
-                DialogResult result = MessageBox.Show("Exit program?", "Exit", MessageBoxButtons.YesNo);
+                await Task.Run(() =>
+                {
+                    DialogResult result = MessageBox.Show("Exit program?", "Exit", MessageBoxButtons.YesNo);
 
-                if (result == DialogResult.Yes)
-                {
-                    Application.Exit();
-                }
-                else if (result == DialogResult.No)
-                {
-                }
+                    if (result == DialogResult.Yes)
+                    {
+                        Application.Exit();
+                    }
+                    else if (result == DialogResult.No)
+                    {
+                    }
+                });
             }
             catch (Exception error)
             {
-                ErrorHandling.CatchExToLog(error);
+                await ErrorHandling.CatchExToLog(error);
             }
         }
         // Browse button
-        private void button4_Click(object sender, EventArgs e)
+        private async void button4_Click(object sender, EventArgs e)
         {
             try
             {
-                OpenFileDialog openFileDialog = new OpenFileDialog();
-                openFileDialog.Multiselect = true;
-                if (openFileDialog.ShowDialog() == DialogResult.OK)
+                await Task.Run(() =>
                 {
-                    string[] selectedFilePaths = openFileDialog.FileNames;
-
-                    foreach (string filePath in selectedFilePaths)
+                    OpenFileDialog openFileDialog = new OpenFileDialog();
+                    openFileDialog.Multiselect = true;
+                    if (openFileDialog.ShowDialog() == DialogResult.OK)
                     {
-                        listBox1.Items.Add(filePath);
+                        string[] selectedFilePaths = openFileDialog.FileNames;
+
+                        foreach (string filePath in selectedFilePaths)
+                        {
+                            listBox1.Items.Add(filePath);
+                        }
                     }
-                }
+                });
             }
             catch (Exception error)
             {
-                ErrorHandling.CatchExToLog(error);
+                await ErrorHandling.CatchExToLog(error);
             }
         }
 
 
         // CancelSearchButton
-        private void button5_Click(object sender, EventArgs e)
+        private async void button5_Click(object sender, EventArgs e)
         {
             try
             {
@@ -374,42 +443,60 @@ namespace Ex
             }
             catch (Exception error)
             {
-                ErrorHandling.CatchExToLog(error);
+                await ErrorHandling.CatchExToLog(error);
             }
         }
         //Stop&ContinueSearch
-        private void button6_Click(object sender, EventArgs e)
+        private async void button6_Click(object sender, EventArgs e)
         {
             try
             {
+                button5.Enabled = true;
                 try
                 {
+
                     stopSearch = true;
                     cancelSearch = true;
+
                 }
                 catch (Exception)
                 {
 
-                    ErrorHandling.CatchExToLog("Trouble with setting StopSearch&CancelSearch");
+                    await ErrorHandling.CatchExToLog("Trouble with setting StopSearch&CancelSearch");
                 }
+
 
 
             }
             catch (Exception error)
             {
-                ErrorHandling.CatchExToLog(error);
+                await ErrorHandling.CatchExToLog(error);
+            }
+            finally
+            {
+                button5.Enabled = false;
             }
         }
 
 
-        internal void UpdateProgressBar(int progressPercentage)
+        internal async void UpdateProgressBar(int progressPercentage)
         {
-            progressBar1.Value = progressPercentage;
-            progressBar1.Text = progressPercentage + "%";
-            if (InvokeRequired)
+            try
             {
-                BeginInvoke(new Action<int>(UpdateProgressBar), progressPercentage);
-                return;
+
+                progressBar1.Value = progressPercentage;
+                progressBar1.Text = progressPercentage + "%";
+                if (InvokeRequired)
+                {
+                    BeginInvoke(new Action<int>(UpdateProgressBar), progressPercentage);
+                    return;
+                }
+
+            }
+            catch (Exception error)
+            {
+
+                await ErrorHandling.CatchExToLog(error);
             }
         }
 
@@ -440,95 +527,109 @@ namespace Ex
 
                                     if (fileContent.Contains(searchText))
                                     {
-                                        string copyFilePath = Path.Combine(Environment.CurrentDirectory, Path.GetFileName(filePath));
-                                        totalFilesW++;
-                                        if (!(userChPath.IsNullOrEmpty()))
+                                        await Task.Run(async () =>
                                         {
-                                            copyFilePath = Path.Combine(userChPath, Path.GetFileName(filePath));
-                                        }
-                                        ItemInfo infoToAdd = new ItemInfo()
-                                        {
-                                            FilePath = copyFilePath,
-                                            FileSizeBytes = new FileInfo(filePath).Length,
-                                            CreationDate = File.GetCreationTime(filePath),
-                                            LastModifiedDate = File.GetLastWriteTime(filePath),
-                                            FileExtension = Path.GetExtension(filePath),
-                                            MimeType = ItemInfo.GetMimeType(filePath)
-                                        };
-                                        currentData.Add(infoToAdd);
+                                            string copyFilePath = Path.Combine(Environment.CurrentDirectory, Path.GetFileName(filePath));
+                                            totalFilesW++;
+                                            if (!(userChPath.IsNullOrEmpty()))
+                                            {
+                                                copyFilePath = Path.Combine(userChPath, Path.GetFileName(filePath));
+                                            }
+                                            ItemInfo infoToAdd = new ItemInfo()
+                                            {
+                                                FilePath = copyFilePath,
+                                                FileSizeBytes = new FileInfo(filePath).Length,
+                                                CreationDate = File.GetCreationTime(filePath),
+                                                LastModifiedDate = File.GetLastWriteTime(filePath),
+                                                FileExtension = Path.GetExtension(filePath),
+                                                MimeType = await ItemInfo.GetMimeType(filePath)
+                                            };
+                                            currentData.Add(infoToAdd);
 
-                                        File.Copy(filePath, copyFilePath, true);
-                                        fileContent = fileContent.Replace(searchText, "*******");
-                                        File.WriteAllText(copyFilePath, fileContent);
+                                            File.Copy(filePath, copyFilePath, true);
+                                            fileContent = fileContent.Replace(searchText, "*******");
+                                            File.WriteAllText(copyFilePath, fileContent);
+                                        });
                                     }
                                 }
                                 catch (UnauthorizedAccessException ex1)
                                 {
-                                    ErrorHandling.CatchExToLog(ex1);
+                                    await ErrorHandling.CatchExToLog(ex1);
                                 }
                                 catch (Exception ex)
                                 {
-                                    ErrorHandling.CatchExToLog(ex, "Trouble with access");
+                                    await ErrorHandling.CatchExToLog(ex, "Trouble with access");
                                 }
                                 finally
                                 {
-                                    processedFiles++;
-                                    int progressPercentage = (int)(((double)processedFiles / totalFiles) * 100);
-                                    UpdateProgressBar(progressPercentage);
+                                    await Task.Run(() =>
+                                    {
+                                        processedFiles++;
+                                        int progressPercentage = (int)(((double)processedFiles / totalFiles) * 100);
+                                        UpdateProgressBar(progressPercentage);
+                                    });
                                 }
                             }
                             else if (cancelSearch == true)
                             {
                                 if (stopSearch == true)
                                 {
-                                   await FileManager.Wait();
+                                    await FileManager.Wait();
                                     processedFiles++;
-                                    
+
                                 }
                                 else if (stopSearch == false)
                                 {
+
                                     string resultBreak = $"Canceled work with{rootDir}";
                                     MessageBox.Show(resultBreak, "Abort", MessageBoxButtons.OK, MessageBoxIcon.Information);
                                     UpdateProgressBar(0);
                                     return;
+
                                 }
-                                
+
                             }
 
 
                             if (processedFiles == totalFiles)
                             {
-                                UpdateProgressBar(100);
-                                MessageBox.Show($"Finished work with drive: {rootDir}", "Message", MessageBoxButtons.OK, MessageBoxIcon.Information);
-                                UpdateProgressBar(0);
+                                await Task.Run(() =>
+                                {
+                                    UpdateProgressBar(100);
+                                    MessageBox.Show($"Finished work with drive: {rootDir}", "Message", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                                    UpdateProgressBar(0);
+                                });
                             }
                         }
                     }
                     else
                     {
-                        ErrorHandling.CatchExToLog($"Directory: {directoryPath} does not exist.");
+                        await ErrorHandling.CatchExToLog($"Directory: {directoryPath} does not exist.");
                     }
 
                 });
             }
             catch (Exception error)
             {
-                ErrorHandling.CatchExToLog(error);
+                await ErrorHandling.CatchExToLog(error);
             }
         }
         //Continue button
-        private void button7_Click(object sender, EventArgs e)
+        private async void button7_Click(object sender, EventArgs e)
         {
             try
             {
-                stopSearch = false;
-                cancelSearch = false;
+                await Task.Run(() =>
+                {
+                    stopSearch = false;
+                    cancelSearch = false;
+                });
 
             }
             catch (Exception error)
             {
 
-                ErrorHandling.CatchExToLog(error);
+                await ErrorHandling.CatchExToLog(error);
             }
         }
     }

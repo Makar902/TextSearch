@@ -14,37 +14,42 @@ namespace Ex.Class
 
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static void CatchExToLog(string errorText)
+        public static async Task CatchExToLog(string errorText)
         {
-            string logMessage = $"{DateTime.Now:yyyy-MM-dd HH:mm:ss} - {errorText}";
+            await Task.Run(() => {
+                string logMessage = $"{DateTime.Now:yyyy-MM-dd HH:mm:ss} - {errorText}";
 
-            lock (logLock)
-            {
-                using (StreamWriter log = new StreamWriter(LogTXT, true))
+                lock (logLock)
                 {
-                    log.WriteLine(logMessage);
+                    using (StreamWriter log = new StreamWriter(LogTXT, true))
+                    {
+                        log.WriteLine(logMessage);
+                    }
                 }
-            }
+            });
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static void CatchExToLog(Exception error)
+        public static async Task CatchExToLog(Exception error)
         {
-            CatchExToLog(error, null);
+            await CatchExToLog(error, null);
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static void CatchExToLog(Exception error, string? text)
+        public static async Task CatchExToLog(Exception error, string? text)
         {
-            string logMessage = $"{DateTime.Now:yyyy-MM-dd HH:mm:ss} - {(text != null ? text : "")}{error}";
-
-            lock (logLock)
+            await Task.Run(() =>
             {
-                using (StreamWriter log = new StreamWriter(LogTXT, true))
+                string logMessage = $"{DateTime.Now:yyyy-MM-dd HH:mm:ss} - {(text != null ? text : "")}{error}";
+
+                lock (logLock)
                 {
-                    log.WriteLine(logMessage);
+                    using (StreamWriter log = new StreamWriter(LogTXT, true))
+                    {
+                        log.WriteLine(logMessage);
+                    }
                 }
-            }
+            });
         }
 
     }

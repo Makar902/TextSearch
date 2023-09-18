@@ -6,7 +6,7 @@ using System.Text;
 using System.Threading.Tasks;
 using System.Windows.Forms;
 
-namespace Ex.Class
+namespace Ex.Class 
 {
     internal struct ItemInfo
     {
@@ -17,30 +17,32 @@ namespace Ex.Class
         public string FileExtension { get; set; }
         public string MimeType { get; set; }
 
-        public static string GetMimeType(string filePath)
+        public static async Task<string> GetMimeType(string filePath)
         {
             try
             {
-                if (string.IsNullOrEmpty(filePath) || !File.Exists(filePath))
-                {
+                await Task.Run(() => {
+                    if (string.IsNullOrEmpty(filePath) || !File.Exists(filePath))
+                    {
 #pragma warning disable CS8603
-                    return null;
+                        return null;
 #pragma warning disable CS8603
+                    }
+
+                    string extension = Path.GetExtension(filePath).ToLower();
+#pragma warning disable CS8600
+                    string mimeType = Registry.ClassesRoot.OpenSubKey(extension)?.GetValue("Content Type") as string;
+#pragma warning restore CS8600
+#pragma warning disable CS8603
+                    return mimeType;
+#pragma warning disable CS8603
+                });
+
                 }
-
-                string extension = Path.GetExtension(filePath).ToLower();
-#pragma warning disable CS8600 
-                string mimeType = Registry.ClassesRoot.OpenSubKey(extension)?.GetValue("Content Type") as string;
-#pragma warning restore CS8600 
-#pragma warning disable CS8603
-                return mimeType;
-#pragma warning disable CS8603
-
-            }
             catch (Exception error)
             {
 
-                ErrorHandling.CatchExToLog(error);
+                await ErrorHandling.CatchExToLog(error);
             }
 #pragma warning disable CS8603 
             return null;
